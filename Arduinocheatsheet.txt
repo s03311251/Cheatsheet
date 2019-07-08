@@ -1,0 +1,33 @@
+	void setup() {               
+	}
+
+	void loop() {
+	}
+
+	pinMode(pin, OUTPUT/INPUT);
+
+    digitalWrite(pin,HIGH/LOW);
+	digitalRead(pin);=>return HIGH/LOW
+	analogWrite(pin, 0~255);
+	analogRead(pin);=>return int(0~1023)
+
+	delay(ms);
+
+-----Serial-----
+
+	-----setup-----
+		Serial.begin(9600); //9600 is the bandwidth
+
+	-----loop-----
+		while (Serial.available() == 0); //wait until available
+		Serial.read();=>return char
+		Serial.print(1.23456)=>1.23
+		Serial.print("Hello World.")=>Hello World.
+		Serial.print(78, HEX)=>4E
+		Serial.println(val);
+		Serial.println(1.23456, 5)=>1.23456
+		Serial.parseInt();=>return int
+
+-----constrain-----
+sensVal = constrain(sensVal, 10, 150);
+// limits range of sensor values to between 10 and 150 

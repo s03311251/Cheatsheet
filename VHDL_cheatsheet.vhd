@@ -18,7 +18,11 @@
 -- 16. Hardware Setup.. -> Currently selected hardware: USB-Blaster
 -- 17. Start
 
+
+
 -- ## Simulation
+-- VHDL Cookbook Ch.1
+--
 -- 1. File -> New -> Vector Waveform File
 -- 2. add pins (double clink in white space under Name and Value at...)
 -- 3. select Node Finder -> List -> select the nodes you want -> OK
@@ -31,9 +35,41 @@
 -- 7. Simulation input: -> [your].vwf
 -- 8. Generate Functional Simulation Netlist -> Start -> Report
 
+-- # Simulation: Discrete Event Time Model
+-- 1. changing input value
+-- 2. run code
+-- 3. schedule transactions: new output values at later simulated time
+--    event: new value =/= old
+--
+-- Initialisation phase
+-- 2-stage simulation cycle
+-- 1. advance time to earilest scheduled transaction
+-- 2. react to events
+
 
 
 -- # Entity
+entity_declaration ::=
+    entity identifier is
+        entity_header
+        entity_declarative_part
+    [ begin
+        entity_statement_part ]
+    end [ entity_simple_name ] ;
+
+-- important, spec of generic constants (ctrl structure and behaviour) and ports
+entity_header ::=
+    [ formal_generic_clause ]
+    [ formal_port_clause ]
+generic_clause ::= generic ( generic_list ) ;
+generic_list ::= generic_interface_list
+port_clause ::= port ( port_list ) ;
+port_list ::= port_interface_list
+
+-- declare items to be used, usually will be included in the implementation, only mentioned here for completness
+entity_declarative_part ::= { entity_declarative_item }
+
+
 
 -- in xor3_gate.vhd
 
@@ -81,6 +117,9 @@ ARCHITECTURE dataflow OF xor2 IS
 END dataflow;
 
 
+-- ## Component: sub-module
+-- ## Block: inline component
+
 
 -- # Library
 LIBRARY ieee;
@@ -91,6 +130,41 @@ USE ieee.std_logic_arith.all; -- depreciated version of numeric_std
 
 
 -- # Data Types
+-- VHDL Cookbook Ch.2
+-- Comments
+-- Identifiers
+
+-- Numbers, Characters, Strings, Bit Strings
+-- Integer, Floating, Enumeration
+-- Physical: 1st and 2nd types e.g.
+TYPE resistance IS RANGE 0 TO 1E8
+    UNITS
+        ohms;
+        kohms = 1000 ohms;
+        Mohms = 1E6 ohms;
+    END UNITS
+
+-- Array
+--   Array aggregate:
+('f', 'o', 'o', 'd') -- position association
+(1 => 'f', 4 => 'd', 3 => 'o', 2 => 'o') -- named association
+
+-- Record = struct in C
+-- Subtype
+SUBTYPE pin_count IS integer RANGE 0 TO 400;
+
+-- Object: constant, variable, signal
+
+-- Attributes: additional info
+-- VHDL Cookbook Ch.2.2.9
+T'left -- left bound of T
+T'pos(X) -- position number of X in T
+T'rightof(X) -- value in T which is one position right from X
+A'range(N) -- Index range of dim'n N of A
+A'length(N) -- Length of index range of dim'n N of A
+
+
+
 bit 
 -- 0,1 (Forcing); L,H (Weak); X (Forcing Unknown); W (Weak Unknown)
 -- Z (High Impedance); - (Don’t Care); U (Uninitialized)
@@ -145,8 +219,9 @@ SIGNAL a, b, c : STD_LOGIC_VECTOR(0 TO 7);
 		a <= b OR c;
 
 -- PRECEDENCE OF ORDER
--- NOT
+-- ** ABS NOT
 -- * / MOD REM
+-- +(sign) -(sign)
 -- + - &(concatenate) 
 -- ROR ROL(rotate) SRL SLL(shift logical) SRA SLA(shift arithmetic)
 -- = /= < <= > >=
@@ -301,6 +376,34 @@ END behav;
 		END LOOP;
 
 
+
+-- # NULL
+-- do nothing = pass in Python
+CASE cmd IS
+    WHEN forward => engage_motor_forward;
+    WHEN reverse => engage_motor_reverse;
+    WHEN forward => NULL;
+END CASE;
+
+
+
+-- # ASSERT
+-- = Exception in Python
+-- 
+assertion_statement ::==
+    ASSERT condition
+        [ report expression ]
+        [ severity expression ];
+
+-- report expression type: string
+-- severity expression type: severity_level, error if omitted
+-- simulator may terminate execution
+
+
+
+-- # Procedures and Functions, Overloading
+-- # Packages
+-- VHDL Cookbook Ch.2.5
 
 -- # Functions, procedures and parameterized modules
 -- # New types and sub-types
