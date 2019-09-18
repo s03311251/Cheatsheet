@@ -43,6 +43,8 @@ void loadProducts(Database &d, string fileName) //"&" here
 			break;
 		default:
 			cout << "Invalid grade\n";
+			/* Made for Misra-C Compliance. */
+        	break;
 	}
 
 /*----------float----------*/

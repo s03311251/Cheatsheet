@@ -20,6 +20,14 @@
 
 
 
+-- # Use Xilinx ISE
+-- ## Simulation: ISim
+
+-- ### reload VHDL code without restart ISim
+-- https://forums.xilinx.com/t5/Simulation-and-Verification/Isim-How-to-update-vhdl-code-without-restarting-Isim/td-p/61954
+-- Re-launch at top-right corner
+
+
 -- ## Simulation
 -- VHDL Cookbook Ch.1
 --
@@ -46,6 +54,26 @@
 -- 1. advance time to earilest scheduled transaction
 -- 2. react to events
 
+
+-- # convention
+
+	component XOR2 is
+	port(
+		I1 : in std_logic; -- each signal per line -> easy comment and write port map
+		I2 : in std_logic;
+		Y : out std_logic
+	);
+	end component;
+
+	begin
+		U1: XOR2
+		port map( I1 => 
+				A,I2 => B,
+				Y => U1_OUT);
+		U2: XOR2
+		port map( I1 => U1_OUT,
+				I2 => C,
+				Y => Result);
 
 
 -- # Entity
@@ -206,6 +234,8 @@ SIGNAL e: STD_LOGIC_VECTOR(8 DOWNTO 0);
 		d <= X"AF67"; -- Hexadecimal
 		e <= O"723"; -- Octal base
 
+-- ??? if multiple assignment -> synthesis error? warning? simulation error?
+
 -- ### := : VARIABLE, blocking evaluate sequentially
 		p := a XOR b;
 
@@ -226,6 +256,28 @@ SIGNAL a, b, c : STD_LOGIC_VECTOR(0 TO 7);
 -- ROR ROL(rotate) SRL SLL(shift logical) SRA SLA(shift arithmetic)
 -- = /= < <= > >=
 -- AND OR NAND NOR XOR
+
+-- ### Shift
+-- https://web.archive.org/web/20160604094455/http://homepage.ntlworld.com/jonathan.deboynepollard/FGA/bit-shifts-in-vhdl.html
+-- https://stackoverflow.com/questions/43362834/real-life-use-of-sla-operator-in-vhdl
+-- SRL SLL SRA SLA never works
+-- sll, sla behaves differently for different types, which makes them unexpected:
+-- sll, sla for old types are wrong: copies the original LSB into the new LSB, instead of filling the LSB of the result with zero
+-- sll, sla for new types (unsigned and signed) are correct
+-- use shift_left(), shift_right(), rotate_left(), rotate_right() instead for unsigned and signed
+process is
+begin
+  -- Left Shift
+  r_Unsigned_L <= shift_left(unsigned(r_Shift1), 1);
+  r_Signed_L   <= shift_left(signed(r_Shift1), 1);
+  
+  -- Right Shift
+  r_Unsigned_R <= shift_right(unsigned(r_Shift1), 2);
+  r_Signed_R   <= shift_right(signed(r_Shift1), 2);
+
+  wait for 100 ns;
+end process;
+
 
 
 
@@ -399,6 +451,13 @@ assertion_statement ::==
 -- severity expression type: severity_level, error if omitted
 -- simulator may terminate execution
 
+if (done = '1' and led /= all_zero) then
+    simtimeprint;
+    report "Test Completed Successfully" severity failure;
+elsif (status = '0' and done = '1') then
+    simtimeprint;
+    report "Test Failed !!!" severity failure;
+end if;
 
 
 -- # Procedures and Functions, Overloading
@@ -416,9 +475,56 @@ assertion_statement ::==
 
 
 
+-- # flip-flop / counter / FSM
+
+    process (CLK_I, RST_I )
+    begin
+
+		-- set and reset first
+	    if ( RST_I = '1') then
+		    RST_R <= '1' ;
+
+		-- use elsif for other process
+	    elsif ( rising_edge (CLK_I) ) then
+		    if (CNT_RST(WIDTH-1) = '1' ) then
+			    RST_R <= '0' ;
+		    end if ;
+	    end if ;
+    end process ;
+
+-- ## buffer
+-- ### IBUF
+
+library UNISIM;
+use UNISIM.VComponents.all;
+
+-- ...
+
+    -- define the buffers for the incoming data, clocks, and control
+	IBUF_rst_i0:    IBUF    port map (I=>rst_pin, O=>rst_i);
+	
+-- ### OBUF
+
+    -- define the buffers for the outgoing data
+    OBUF_led_ix: for i in 0 to 7 generate
+          OBUF_led_i: OBUF port map (I=>LED_o(i), O=>LED_pins(i));
+       end generate;
+
+-- ### IOBUF
+-- [7 Series FPGAs SelectIO Resources User Guide](https://www.xilinx.com/support/documentation/user_guides/ug471_7Series_SelectIO.pdf)
+-- input buffer and a 3-state output buffer
+--	T: disable output buffer
+
+scl_inst : IOBUF
+port map (
+  IO         => scl_io,
+  I          => scl_o,
+  O          => scl_i,
+  T          => scl_tri);
 
 
 
+-- ##
 
 
 
