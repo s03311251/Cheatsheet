@@ -293,9 +293,35 @@ Ref: *ELEC3342 Ch. 8*
 * diode clamps -> over/under-voltage surge
 * thin gate oxides
 
+### dipole effect
+
+analog GND <-> power supply <-> digital GND
+-> effective antenna
+decoupling cap/filter
+
+### EMI mitigration techniques
+
+1. striplines
+2. microstrip
+3. ...
+
+* avoid via for high speed
+  * small via = high inductance
+  * application specific
+* slower rising edge
+* board guarding
+  * if multiple GND domains, each use guarding if high speed
+
 ## Passive Delay Line
 
 [Passive Delay Line Design Considerations](http://www.rhombus-ind.com/dlcat/app1_pas.pdf
 )
 
 A Passive Delay Line is a special purpose Low Pass Filter designed to delay (phase shift) the input signal by a specifiedincrement of time, and is composed of series inductors andshunt capacitors with values dictated by the line impedance.
+
+## Instruments
+
+### Oscilloscope
+
+* Probe  
+  ![Probe structure](Hello/x10-probe.svg)

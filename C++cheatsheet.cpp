@@ -240,7 +240,9 @@ int main()
 	yyy = *xxx; //eg. yyy = 25;
 
 	//declare pointer
+	// * follows the word before!
 	int *ip;
+	int* a, b; // a is pointer but b is int!
 
 	//eg. with string
 	string name("Chris Wong");
@@ -732,6 +734,17 @@ eg.	*/
 	#define BIGINTEGER_H
 	...
 	#endif
+
+/* Macros */
+// in C, used in general programming as there's  no need to care about data type
+// in C++, better to use templated class, templated functions and inline functions
+
+
+#define bad_square(x) x*x // bad
+square(3+4) // become 3+4*3+4, explode!
+#define good_square(x) ((x)*(x))// always bracket input arguments
+
+
 
 /*-----Syntax Checking-----*/
 /*

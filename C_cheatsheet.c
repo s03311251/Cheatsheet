@@ -226,9 +226,10 @@ void perror(const char *s);
 // str1 = str2 ins't working
 
 	strcpy (char s1[], char s2[]);	//Copy char array s2 to s1
-
 	//e.g.
 	strcpy(str, "abc");
+
+	strncpy(dest, src, n); // copy n chars from src to dest, safer
 
 
 
@@ -247,11 +248,13 @@ void perror(const char *s);
 	if (strcmp(a,b) == 0)
 		printf("They are the same\n");
 
+	strncmp(s1, s2, n); // compare first n bytes
+
 
 
 /* Concatenate == Append s2 after the end of s1 */
 	strcat (char s1[], char s2[]);
-
+	strncat(dest, src, n);
 
 
 /* Return the length of the string stored in the char array s1 */
@@ -261,10 +264,10 @@ void perror(const char *s);
 	strlen (char s1[]);
 
 
-
 /* Search */
 
-	strchr("Hello", 'e'); // 0x4005e5: & of e in the str
+	strchr("Hello", 'e'); // first occurance, 0x4005e5: & of e in the str
+	strrchr(str, c); // last occurance
 	strstr("dysfunctional", "fuck")); // 0x40064b: & of 2nd str in 1st str
 	// return NULL if not exists
 	// if (NULL) -> don't execute
@@ -433,12 +436,13 @@ int main() {
 
 /* string literals */
 // string literals are constants in memory (read-only), hence can't be changed with pointer
-	char *cards = "JQK";
+	char *cards = "JQK"; // not recommanded, historical
 	cards[2] = cards[1]; // Segmentation fault
+	const char *cards = "JQK"; // recommanded
 
 
 
-// cards[] here is an array of the copy of the string literal "JQK"
+	// cards[] here is an array of the copy of the string literal "JQK"
 	char cards[] = "JQK";
 	cards[2] = cards[1]; // OK!
 
@@ -543,6 +547,10 @@ struct student{
 
 /* typedef */
 // possible to have the alias name the same as the structure name
+// resolved in compiler, #define is in pre-processor
+
+typedef unsigned char BYTE;
+BYTE b1, b2;
 
 struct student{
 	char name[20];
@@ -607,6 +615,8 @@ int main(){
 /*----------union----------*/
 // reuse memory space
 // reserve space for largest field
+// usually used with enum to store the type a.k.a. discriminator
+// not recommanded in modern days
 
 typedef union {
 	short count;
@@ -974,10 +984,12 @@ int main () {
 
 
 /*----------Function pointer----------*/
+// better used with typedef as it is messy
+
 // return type (*pointer variable) (param. types);
 	char** album_names(char* singer, int year);
 
-	char** (*names_fn)(char*,int); // declare
+	char** (*names_fn)(char*, int); // declare
 	names_fn = &album_names;
 	names_fn = album_names; // the same
 	char** results = (*names_fn)("Sacha Distel", 1972);
