@@ -1,2 +1,4 @@
 *.pdf
 Sandbox
+.vscode
+Thumbs.db

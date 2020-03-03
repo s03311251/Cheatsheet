@@ -8,15 +8,17 @@ Ctrl + Alt + Up/Down (move)
 Ctrl + D (next occurances with selected text)
 Ctrl + Shift + L (all occurances with selected text)
 
-
-
 ## Format code
 
 Shift + Alt + F    (Windows)
 Shift + Option + F (Mac)
 Ctrl + Shift + I   (Ubuntu)
 
+## Navigation
 
+* [StackOverflow](https://stackoverflow.com/questions/35424367/how-to-navigate-back-to-the-last-cursor-position-in-visual-studio-code)
+  * Alt + ← (navigate back)
+  * Alt + → (navigate forward)
 
 ## User Setting
 
@@ -118,3 +120,22 @@ F1 -> Open Keyboard Shortcuts (JSON)
     }
 ]
 ```
+
+## Find and Replace
+
+* submatch: `()` and `$1`
+  * the same as `\1` in `sed`
+* e.g.  
+    Find: `I want to find the pattern: ([0-9]*)`  
+    Replace: `Replace it with -> $1`
+
+* original content: `$0`
+
+## Extension
+
+* PlantUML
+
+  ``` json
+  "plantuml.server": "https://www.plantuml.com/plantuml",
+  "plantuml.render": "PlantUMLServer",
+  ```

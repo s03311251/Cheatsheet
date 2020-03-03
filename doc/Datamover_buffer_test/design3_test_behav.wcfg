@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="design3_test_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="design3_test" />
+            <top_module name="glbl" />
+            <top_module name="lib_pkg" />
+            <top_module name="vcomponents" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="512033334fs"></ZoomStartTime>
+      <ZoomEndTime time="631833335fs"></ZoomEndTime>
+      <Cursor1Time time="520000000fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="207"></NameColumnWidth>
+      <ValueColumnWidth column_width="155"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="40" />
+   <wvobject fp_name="/design3_test/M_AXIS_S2MM_STS_0_tdata" type="array">
+      <obj_property name="ElementShortName">M_AXIS_S2MM_STS_0_tdata[7:0]</obj_property>
+      <obj_property name="ObjectShortName">M_AXIS_S2MM_STS_0_tdata[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXIS_S2MM_STS_0_tkeep" type="array">
+      <obj_property name="ElementShortName">M_AXIS_S2MM_STS_0_tkeep[0:0]</obj_property>
+      <obj_property name="ObjectShortName">M_AXIS_S2MM_STS_0_tkeep[0:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXIS_S2MM_STS_0_tlast" type="logic">
+      <obj_property name="ElementShortName">M_AXIS_S2MM_STS_0_tlast</obj_property>
+      <obj_property name="ObjectShortName">M_AXIS_S2MM_STS_0_tlast</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXIS_S2MM_STS_0_tready" type="logic">
+      <obj_property name="ElementShortName">M_AXIS_S2MM_STS_0_tready</obj_property>
+      <obj_property name="ObjectShortName">M_AXIS_S2MM_STS_0_tready</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXIS_S2MM_STS_0_tvalid" type="logic">
+      <obj_property name="ElementShortName">M_AXIS_S2MM_STS_0_tvalid</obj_property>
+      <obj_property name="ObjectShortName">M_AXIS_S2MM_STS_0_tvalid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/S_AXIS_S2MM_CMD_0_tdata" type="array">
+      <obj_property name="ElementShortName">S_AXIS_S2MM_CMD_0_tdata[71:0]</obj_property>
+      <obj_property name="ObjectShortName">S_AXIS_S2MM_CMD_0_tdata[71:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/S_AXIS_S2MM_CMD_0_tready" type="logic">
+      <obj_property name="ElementShortName">S_AXIS_S2MM_CMD_0_tready</obj_property>
+      <obj_property name="ObjectShortName">S_AXIS_S2MM_CMD_0_tready</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/S_AXIS_S2MM_CMD_0_tvalid" type="logic">
+      <obj_property name="ElementShortName">S_AXIS_S2MM_CMD_0_tvalid</obj_property>
+      <obj_property name="ObjectShortName">S_AXIS_S2MM_CMD_0_tvalid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/design_3_i/fifo_generator_0/m_axis_tvalid" type="logic">
+      <obj_property name="ElementShortName">m_axis_tvalid</obj_property>
+      <obj_property name="ObjectShortName">m_axis_tvalid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/design_3_i/fifo_generator_0/m_axis_tready" type="logic">
+      <obj_property name="ElementShortName">m_axis_tready</obj_property>
+      <obj_property name="ObjectShortName">m_axis_tready</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/design_3_i/fifo_generator_0/m_axis_tdata" type="array">
+      <obj_property name="ElementShortName">m_axis_tdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">m_axis_tdata[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/design_3_i/fifo_generator_0/m_axis_tkeep" type="array">
+      <obj_property name="ElementShortName">m_axis_tkeep[3:0]</obj_property>
+      <obj_property name="ObjectShortName">m_axis_tkeep[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/design_3_i/fifo_generator_0/m_axis_tuser" type="array">
+      <obj_property name="ElementShortName">m_axis_tuser[3:0]</obj_property>
+      <obj_property name="ObjectShortName">m_axis_tuser[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXI_S2MM_0_awaddr" type="array">
+      <obj_property name="ElementShortName">M_AXI_S2MM_0_awaddr[31:0]</obj_property>
+      <obj_property name="ObjectShortName">M_AXI_S2MM_0_awaddr[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXI_S2MM_0_awburst" type="array">
+      <obj_property name="ElementShortName">M_AXI_S2MM_0_awburst[1:0]</obj_property>
+      <obj_property name="ObjectShortName">M_AXI_S2MM_0_awburst[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXI_S2MM_0_awcache" type="array">
+      <obj_property name="ElementShortName">M_AXI_S2MM_0_awcache[3:0]</obj_property>
+      <obj_property name="ObjectShortName">M_AXI_S2MM_0_awcache[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXI_S2MM_0_awid" type="array">
+      <obj_property name="ElementShortName">M_AXI_S2MM_0_awid[3:0]</obj_property>
+      <obj_property name="ObjectShortName">M_AXI_S2MM_0_awid[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXI_S2MM_0_awlen" type="array">
+      <obj_property name="ElementShortName">M_AXI_S2MM_0_awlen[7:0]</obj_property>
+      <obj_property name="ObjectShortName">M_AXI_S2MM_0_awlen[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXI_S2MM_0_awprot" type="array">
+      <obj_property name="ElementShortName">M_AXI_S2MM_0_awprot[2:0]</obj_property>
+      <obj_property name="ObjectShortName">M_AXI_S2MM_0_awprot[2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXI_S2MM_0_awready" type="logic">
+      <obj_property name="ElementShortName">M_AXI_S2MM_0_awready</obj_property>
+      <obj_property name="ObjectShortName">M_AXI_S2MM_0_awready</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXI_S2MM_0_awsize" type="array">
+      <obj_property name="ElementShortName">M_AXI_S2MM_0_awsize[2:0]</obj_property>
+      <obj_property name="ObjectShortName">M_AXI_S2MM_0_awsize[2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXI_S2MM_0_awuser" type="array">
+      <obj_property name="ElementShortName">M_AXI_S2MM_0_awuser[3:0]</obj_property>
+      <obj_property name="ObjectShortName">M_AXI_S2MM_0_awuser[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXI_S2MM_0_awvalid" type="logic">
+      <obj_property name="ElementShortName">M_AXI_S2MM_0_awvalid</obj_property>
+      <obj_property name="ObjectShortName">M_AXI_S2MM_0_awvalid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXI_S2MM_0_bready" type="logic">
+      <obj_property name="ElementShortName">M_AXI_S2MM_0_bready</obj_property>
+      <obj_property name="ObjectShortName">M_AXI_S2MM_0_bready</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXI_S2MM_0_bresp" type="array">
+      <obj_property name="ElementShortName">M_AXI_S2MM_0_bresp[1:0]</obj_property>
+      <obj_property name="ObjectShortName">M_AXI_S2MM_0_bresp[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXI_S2MM_0_bvalid" type="logic">
+      <obj_property name="ElementShortName">M_AXI_S2MM_0_bvalid</obj_property>
+      <obj_property name="ObjectShortName">M_AXI_S2MM_0_bvalid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXI_S2MM_0_wdata" type="array">
+      <obj_property name="ElementShortName">M_AXI_S2MM_0_wdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">M_AXI_S2MM_0_wdata[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXI_S2MM_0_wlast" type="logic">
+      <obj_property name="ElementShortName">M_AXI_S2MM_0_wlast</obj_property>
+      <obj_property name="ObjectShortName">M_AXI_S2MM_0_wlast</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXI_S2MM_0_wready" type="logic">
+      <obj_property name="ElementShortName">M_AXI_S2MM_0_wready</obj_property>
+      <obj_property name="ObjectShortName">M_AXI_S2MM_0_wready</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXI_S2MM_0_wstrb" type="array">
+      <obj_property name="ElementShortName">M_AXI_S2MM_0_wstrb[3:0]</obj_property>
+      <obj_property name="ObjectShortName">M_AXI_S2MM_0_wstrb[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/M_AXI_S2MM_0_wvalid" type="logic">
+      <obj_property name="ElementShortName">M_AXI_S2MM_0_wvalid</obj_property>
+      <obj_property name="ObjectShortName">M_AXI_S2MM_0_wvalid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/ap_clk_0" type="logic">
+      <obj_property name="ElementShortName">ap_clk_0</obj_property>
+      <obj_property name="ObjectShortName">ap_clk_0</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/ap_rst_n_0" type="logic">
+      <obj_property name="ElementShortName">ap_rst_n_0</obj_property>
+      <obj_property name="ObjectShortName">ap_rst_n_0</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/axis_data_count_0" type="array">
+      <obj_property name="ElementShortName">axis_data_count_0[12:0]</obj_property>
+      <obj_property name="ObjectShortName">axis_data_count_0[12:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/axis_prog_full_0" type="logic">
+      <obj_property name="ElementShortName">axis_prog_full_0</obj_property>
+      <obj_property name="ObjectShortName">axis_prog_full_0</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/grab_0" type="logic">
+      <obj_property name="ElementShortName">grab_0</obj_property>
+      <obj_property name="ObjectShortName">grab_0</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/reg_image_col_0" type="array">
+      <obj_property name="ElementShortName">reg_image_col_0[15:0]</obj_property>
+      <obj_property name="ObjectShortName">reg_image_col_0[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/reg_image_row_0" type="array">
+      <obj_property name="ElementShortName">reg_image_row_0[15:0]</obj_property>
+      <obj_property name="ObjectShortName">reg_image_row_0[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/s2mm_err_0" type="logic">
+      <obj_property name="ElementShortName">s2mm_err_0</obj_property>
+      <obj_property name="ObjectShortName">s2mm_err_0</obj_property>
+   </wvobject>
+   <wvobject fp_name="/design3_test/s2mm_addr_req_posted_0" type="logic">
+      <obj_property name="ElementShortName">s2mm_addr_req_posted_0</obj_property>
+      <obj_property name="ObjectShortName">s2mm_addr_req_posted_0</obj_property>
+   </wvobject>
+</wave_config>

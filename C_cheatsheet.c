@@ -41,6 +41,17 @@ int main(){
 
 
 
+/*----------static----------*/
+
+/* static variable */
+
+/* static function */
+// https://stackoverflow.com/questions/5025394/effect-of-return-type-being-static
+// The function is static, not the return type. This means that its name is only visible from within the current compilation unit, which is used as an encapsulation mechanism.
+static int hello();
+
+
+
 /*----------boolean----------*/
 // true and false only available >C99
 0 = false;
@@ -226,6 +237,9 @@ void perror(const char *s);
 // str1 = str2 ins't working
 
 	strcpy (char s1[], char s2[]);	//Copy char array s2 to s1
+
+	// memcpy
+	void * memcpy ( void * destination, const void * source, size_t num );
 
 	//e.g.
 	strcpy(str, "abc");
@@ -513,6 +527,28 @@ double pow(double x, double y)
 
 
 	free(a);  // All the 10 slots of memory are released
+
+/* calloc() vs malloc() */
+// https://vorpus.org/blog/why-does-calloc-exist/
+
+void* buffer2 = calloc(count, size);
+
+/* Equivalent to the calloc() call above -- OR IS IT?? */
+void* buffer3 = malloc(count * size);
+memset(buffer3, 0, count * size);
+
+// calloc() prevents multiplication overflow
+// calloc() is faster for large buffer
+//   calloc() lives inside the memory allocator
+//   memory comes from OS is already be zeroed, and calloc() knows it, so no memset again
+//   memory in virtual memory -> not even accessing the RAM, and calloc() knows it
+//     OS swap "virtual" page more effectively (on a page-by-page basis)
+
+/* realloc(): Reallocate memory block */
+int *arr = calloc(1000, sizeof(int)); // size of 1000 int
+int *arr2 = realloc(arr, sizeof(int) * 2000); // size of 2000 int
+free(arr2); // no need to free arr
+// arr and arr2 may and may not be the same address
 
 
 
@@ -1736,3 +1772,23 @@ sandbox.so:
 https://stackoverflow.com/questions/4175281/what-does-it-mean-to-align-the-stack
 This code "and"s ESP (stack pointer) with 0xFFFFFFF0, aligning the stack with the next lowest 16-byte boundary
 */
+
+/*----------Avoid Warning: unused parameters----------*/
+// https://stackoverflow.com/questions/4647665/why-cast-an-unused-function-parameter-value-to-void
+	(void) the_variable_that_not_used_intentionally;
+
+/*----------Pre-processing----------*/
+// https://docs.microsoft.com/en-us/cpp/preprocessor/hash-undef-directive-c-cpp?view=vs-2019
+// https://stackoverflow.com/questions/216865/undef-ing-in-practice
+
+#define something
+#undef something
+
+// something does not exist anymore
+
+/*----------Compiler (GCC) specific macros----------*/
+
+/* Date and time at compile time */
+
+__DATE__ // == "Jan  3 2020"
+__TIME__ // == "16:14:36"

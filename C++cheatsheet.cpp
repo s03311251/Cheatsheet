@@ -75,6 +75,17 @@ int main() {
 		{5,6}
 	};
 
+// fill an array with a particular value
+
+// Method 1:
+#include <algorithm>
+	int array[100];
+	std::fill_n(array, 100, -1); // fill with -1
+
+// Method 2: gcc/clang only - Designated Initializers
+// but not in g++ ?!
+	int array[100] = { [0 ... 99] = -1 };
+
 /*----------selection sort----------*/
 void swap (int &a, int &b)
 {
@@ -145,6 +156,57 @@ void sort(int a[], int size)
 
 	//assign 6 characters starting at 5th to xxx
 	xxx.assign("caterpillar", 5, 6); //xxx = "pillar"
+
+/* String Stream */
+// https://home.gamer.com.tw/creationDetail.php?sn=4114818
+
+// int to string
+
+#include <sstream>
+using namespace std;
+int main()
+{
+	stringstream s1;
+	int number = 1234;
+	string output; //要把number轉成字串型態的容器
+
+	cout << "number=" << number << endl; //顯示number=1234;
+
+	s1 << number; //將以int宣告的number放入我們的stringstream中
+	s1 >> output;
+
+	cout << "output=" << output << endl; //顯示output=1234;
+
+	// convert to string
+	string output2 = s1.str();
+	cout << output << endl;
+}
+
+// string to int
+#include <sstream>
+using namespace std;
+int main()
+{
+	stringstream string_to_int;
+	string s1 = "12345";
+	int n1;
+
+	string_to_int << s1;
+	//也可以使用string_to_int.str(s1);
+	//或者 s1=string_to_int.str();
+
+	string_to_int >> n1;
+
+	cout << "s1=" << s1 << endl; //s1=12345
+	cout << "n1=" << n1 << endl; //n1=12345
+}
+
+// clear
+    stringstream s1;
+
+	// both str("") and clear are necessary
+    s1.str(""); // clear data inside
+    s1.clear(); // clear EOF
 
 /*----------file I/O----------*/
 #include <fstream>
@@ -468,7 +530,12 @@ int main()
 	compile -> main.o
 	linker -> links main.o and BigInterger.o
 
-	Capitalize user-defined class name*/
+	Capitalize user-defined class name
+	
+	class VS struct
+    access specifier defaults to private for class and public for struct
+    inheritance defaults to private for class and public for struct
+*/
 
 //BjgInteger.h (header file)
 #include <string>

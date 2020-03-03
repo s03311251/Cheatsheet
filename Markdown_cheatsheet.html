@@ -1,0 +1,50 @@
+<h1 id="heading">Heading</h1>
+<h2 id="sub-heading">Sub-heading</h2>
+<h3 id="another-deeper-heading">Another deeper heading</h3>
+<p>Paragraphs are separated by a blank line.</p>
+<p>Two spaces at the end of a line leave a<br />
+line break.</p>
+<p>Text attributes <em>italic</em>, <em>italic</em>, <strong>bold</strong>, <strong>bold</strong>, <code>monospace</code>.</p>
+<p>Horizontal rule:</p>
+<hr />
+<p>Bullet list:</p>
+<ul>
+<li>apples</li>
+<li>oranges</li>
+<li>pears</li>
+</ul>
+<p>Numbered list:</p>
+<ol type="1">
+<li>apples</li>
+<li>oranges</li>
+<li>pears</li>
+</ol>
+<p>A <a href="http://example.com">link</a>.</p>
+<p>A <a href="#Sub-heading">link to heading</a></p>
+<figure>
+<img src="https://vignette.wikia.nocookie.net/nichijou/images/7/79/Nanokey.png" alt="" /><figcaption>Nano Shinonome</figcaption>
+</figure>
+<h2 id="uml-plantuml-plugin">UML: PlantUML plugin</h2>
+<pre class="plantuml"><code>@startuml
+
+&#39;single line comment&#39;
+&#39; single line comment
+/&#39; multi-line
+comment &#39;/
+
+skinparam backgroundColor #EEEBDC
+skinparam handwritten true
+actor Customer
+Customer -&gt; &quot;login()&quot; : Centre \n aligned
+&quot;login()&quot; -&gt; Customer : Left \l aligned
+activate &quot;login()&quot;
+Customer -&gt; &quot;placeOrder()&quot; : Right \r aligned
+&quot;placeOrder()&quot; -&gt; Customer : ok
+Customer -&gt; &quot;logout()&quot;
+&quot;logout()&quot; -&gt; Customer : ok
+deactivate &quot;login()&quot;
+
+@enduml</code></pre>
+<p>```plantuml <span class="citation" data-cites="startuml">@startuml</span> scale 600 width</p>
+<p>‘State diagram’</p>
+<p>‘no space in states’ name, use _ instead’ [*] -&gt; State1 State1 –&gt; State2 : Succeeded State1 –&gt; [*] : Aborted State2 –&gt; State3 : Succeeded State2 –&gt; [*] : Aborted state State3 { state “Accumulate Enough DataState Name” as long1 long1 : Just a test [*] –&gt; long1 long1 –&gt; long1 : New Data long1 –&gt; ProcessData : Enough Data } State3 –&gt; State3 : Failed State3 –&gt; [*] : Succeeded / Save Result State3 –&gt; [*] : Aborted</p>

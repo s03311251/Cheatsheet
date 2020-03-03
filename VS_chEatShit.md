@@ -12,3 +12,12 @@ Bookmark  | Ctrl+K, Ctrl+K
 
 * Global/Local variable
   * Debug -> Windows -> Autos/Locals
+
+## Spaces instead of Tabs, make your salary increase by 9%
+
+* Tools->Options->Text Editor->All Languages->Tabs
+
+## Print
+
+* `OutputDebugString("Hello, World!")`
+  * `Output` -> `Show Output From: Debug`
