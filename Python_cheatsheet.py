@@ -8,6 +8,8 @@ print "Hello world!"
 print "Hello",	# no newline but a space
 print "world!"
 
+print("Hello", end = '') # no newline in Python 3
+
 s = raw_input("What's your name? ")	
 # input() in python3
 # "What's your name? " is printed
@@ -15,6 +17,8 @@ s = raw_input("What's your name? ")
 n = int(s)
 print "Half of " + s + " is " + str(n/2)
 
+# stdin, stdout, stderr
+# https://www.askpython.com/python/python-stdin-stdout-stderr
 
 # VARIABLE
 
@@ -28,6 +32,10 @@ print a/2
 print b/2 
 print a/b # int divided by float -> 1.66666666667
 
+x = hex(16) # int to string in hex format, x = "0x10"
+y = int("0x10", 16) # string in hex 
+y = int("10", 16) # the same
+y = int("0x10", 0) # the same because Python recongise the "0x"
 
 ## CHECK IF EXIST
 ## https://stackoverflow.com/questions/843277/how-do-i-check-if-a-variable-exists
@@ -67,6 +75,12 @@ print s[:4]        # substring from start to s[3]
 print s[1:]        # substring from s[1] to the end
 print len(s)       # string length
 
+# https://stackoverflow.com/questions/6797984/how-do-i-lowercase-a-string-in-python
+print s.lower()    # to lowercase
+print s.upper()    # to uppercase
+print s.casefold() # for case-insensitive matching, e.g. ß -> ss
+# Unicode literal
+
 ## SPLIT
 # e.g.
 line = "0,Problem Solving in C++,104.26,0.jpg, ..."
@@ -101,6 +115,9 @@ str2 = "is";
 print str1.rfind(str2)
 print str1.rfind(str2, 0, 10)
 print str1.rfind(str2, 10, 0)
+
+## REMOVE SPACES
+s.strip() # trailing & leading
 
 ## FORMAT
 ### https://pyformat.info/
@@ -217,7 +234,7 @@ student_tuples = [
         ('dave', 'B', 10),
 ]
 sorted(student_tuples, key=lambda student: student[2])   # sort by age
-sorted(student_tuples, key=lambda student: student.age)   # the same if student[2] == student.age
+sorted(student_tuples, key=lambda student: student.age)   # the same if students is a class, use named attributes to sort
 student_tuples.sort(key=lambda student: student[2])   # the same
 ## [('dave', 'B', 10), ('jane', 'B', 12), ('john', 'A', 15)]
 
@@ -288,10 +305,29 @@ print(printstr)
 
 
 # TUPLE
-xxx = (1, 2, 3)
+from math import sqrt
+pt1 = (1.0, 5.0)
+pt2 = (2.5, 1.5)
 
+line_length = sqrt((pt1[0]-pt2[0])**2 + (pt1[1]-pt2[1])**2)
 
+## named tuple
+# https://stackoverflow.com/questions/2970608/what-are-named-tuples-in-python
 
+from math import sqrt
+from collections import namedtuple
+Point = namedtuple('Point', 'x y')
+pt1 = Point(1.0, 5.0)
+pt2 = Point(2.5, 1.5)
+
+line_length = sqrt((pt1.x-pt2.x)**2 + (pt1.y-pt2.y)**2)
+
+# https://stackoverflow.com/questions/22562425/attributeerror-cant-set-attribute-in-python
+# tuples and named tuples are immutable, so attributes can only be replaced, not updated
+# i.e. pt1.x = 10 => AttributeError: can't set attribute
+# Method 1: don't use tuples
+# Method 2: use _replace()
+pt1 = pt1._replace(x = 10)
 
 # MATHEMATICAL FUNCTIONS
 	# https://docs.python.org/2.7/library/math.html?highlight=power
@@ -764,7 +800,11 @@ try:
 finally:
     print "Goodbye"
 
+# pip
 
+## install under proxy
+## https://stackoverflow.com/questions/14149422/using-pip-behind-a-proxy-with-cntlm
+## pip install --proxy=https://user@mydomain:port somepackage
 
 
 

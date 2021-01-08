@@ -10,7 +10,7 @@ by a blank line.
 Two spaces at the end of a line leave a  
 line break.
 
-Text attributes _italic_, *italic*, __bold__, **bold**, `monospace`.
+Text attributes _italic_, *italic*, __bold__, **bold**, `monospace`, ~~strikethrough~~.
 
 Horizontal rule:
 

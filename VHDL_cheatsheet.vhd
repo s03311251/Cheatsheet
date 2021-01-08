@@ -58,6 +58,9 @@
 -- # convention
 
 	component XOR2 is
+	generic(
+		C_XYZ : STRING := "XYZ"
+	);
 	port(
 		I1 : in std_logic; -- each signal per line -> easy comment and write port map
 		I2 : in std_logic;
@@ -67,6 +70,9 @@
 
 	begin
 		U1: XOR2
+		generic map(
+			C_XYZ => "ABC"
+		)
 		port map(
 			I1 => A,
 			I2 => B,
@@ -76,6 +82,17 @@
 			I1 => U1_OUT,
 			I2 => C,
 			Y => open); -- leave open when you don't care the output port
+
+-- ## port map mapping several std_logic to std_vector
+
+u26: ripple_counter port map (
+    clk => u22d_out,
+    clear => u21b_out,
+    dout(11) => u26_q12_out,
+    dout(10) => open,
+    dout(9) => q10,
+    dout(8 downto 0) => open
+);
 
 -- ## Signal name
 
@@ -167,10 +184,22 @@ USE ieee.std_logic_arith.all; -- depreciated version of numeric_std
 
 -- # Data Types
 -- VHDL Cookbook Ch.2
+
+-- boolean
+signal CondSup : boolean;
+CondSup <= true;
+CondSup <= false;
+
 -- Comments
+
+--! comments with Doxygen: https://www.doxygen.nl/manual/docblocks.html#vhdlblocks
+
 -- Identifiers
 
 -- Numbers, Characters, Strings, Bit Strings
+type String is array (positive range <>) of character;
+type Memory_t is array (0 to 127) of std_logic_vector(7 downto 0);
+
 -- Integer, Floating, Enumeration
 -- Physical: 1st and 2nd types e.g.
 TYPE resistance IS RANGE 0 TO 1E8
@@ -192,6 +221,10 @@ SUBTYPE pin_count IS integer RANGE 0 TO 400;
 -- Object: constant, variable, signal
 
 -- Attributes: additional info
+
+attribute mark_debug : string;
+attribute mark_debug of sine : signal is "true";
+
 -- VHDL Cookbook Ch.2.2.9
 T'left -- left bound of T
 T'pos(X) -- position number of X in T
@@ -303,17 +336,35 @@ SIGNAL my_state : state_type
 
 
 -- # Generate
+
+-- for-generate
+
+OBUF_led_ix: for i in 0 to 7 generate
+	OBUF_led_i: OBUF port map (I=>LED_o(i), O=>LED_pins(i));
+end generate;
+
+-- if-generate
+
 entity debounce is
     generic (C_DEBUG : std_logic := '1');
 end entity debounce;
 
 architecture RTL of debounce is
 begin
-    DEBUG : if (C_DEBUG = '1') generate
-        -- something
-    end generate DEBUG;
+	DEBUG : if (C_DEBUG = '1') generate
+		signal xxx : std_logic;
+	begin -- optional, only when you need the signals above
+		-- something
+	else generate -- only allowed in VHDL-2008
+	end generate DEBUG;
 end architecture RTL;
 
+-- https://www.edaboard.com/threads/whats-the-equivalent-of-ifdef-in-vhdl.140473/
+-- generate can only be used outside a process (if-generate is concurrent)
+-- use if-then instead inside a process (if-then is sequencial)
+-- A VHDL synthesis program is extremely good in optimization of constants and will eliminate the dead if/else branch without any additional logic being generated
+
+-- https://stackoverflow.com/questions/47302553/vhdl-why-are-you-not-allowed-to-use-variables-in-generate-loops/47303006
 
 
 -- # Modelling
@@ -422,7 +473,15 @@ END behav;
 -- ## Synchronous Counter
 -- lecture05 P.51
 
-
+-- * should you write the output in every stages?
+--   * Reference: Xilinx UG949: Creating Clock Enables
+--   * imcpmolete conditional statement creates "clock enables"
+--     * save some power bcz the LUT won't toggle
+--     * more complex to place-and-route bcz it increases control set count
+--   * Yes only if:
+--     * you need to retain the last value; or
+--     * driving a large bus (to save power)
+--   * otherwise, drive the "don't care" output to '1' or '0'
 
 -- # WAIT
 		WAIT ON x; -- signal event
@@ -440,14 +499,15 @@ END behav;
 
 
 
--- # WHILE
+-- # WHILE-LOOP
 		WHILE <condition> LOOP
 		{sequential statements}
 		END LOOP;
 
 
 
--- # FOR
+-- # FOR-LOOP
+-- scope: in a process
 		FOR <identifier> IN <range>
 		LOOP
 		{sequential statements}
@@ -752,5 +812,30 @@ begin
 
 end arc_dir;
 
+-- # Coding style
+
+-- one line for each signal
+-- always use named association
+
+-- * name
+-- _l for active-low signal
+-- -io for bi-direcctional signals
+-- no -in and --out for port, very confusing in hierarchical boundaries
+-- _i for internal
+-- _v for variable
+-- _p0, _p1 for pipelined
+-- 
+
+-- * syntax
+-- no `buffer` because not all syntheis vendors support `buffer`
 
 
+
+
+
+
+-- # Problems
+
+-- problem: formal port 'portName' has no actual or default value
+-- https://stackoverflow.com/questions/57639047/vhdl-formal-port-portname-has-no-actual-or-default-value
+-- reason:  shouldn't have a semicolon at the end of generic map(BIT_DEPTH,INPUT_CLK,FREQ);

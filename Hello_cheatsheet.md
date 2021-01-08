@@ -1,10 +1,22 @@
 ﻿# Hello
 
+* [Bogatin’s Rules of Thumb](https://www.edn.com/bogatins-rules-of-thumb/)
+
 ## Analogue circuit
+
+* 4-level LVCMOS input: 0, R, F, 1
+  * 4 voltage interval, e.g.
+    * 0: `0 - Vcc*0.25 - 0.3`
+    * R: `Vcc*0.25 + 0.3 - Vcc*0.5 - 0.3`
+    * F: `Vcc*0.5 + 0.3 - Vcc*0.75 - 0.3`
+    * 1: `Vcc*0.75 + 0.3 - Vcc`
+  * usually config pin, achieve desired voltage by putting different resistors against GND/Vcc
 
 ### Open collector
 
 ![circuit](img\300px-OpencollectorV3.png)
+
+![symbol](2020-09-21-15-57-13.png)
 
 behaves like a switch that is either connected to ground or disconnected
 
@@ -65,11 +77,124 @@ Flyback diode + Zener in series (of course in anodes opposite direction, so curr
 single flyback diode: RL circuit -> slow
 with Zener: drop immediately -> fast
 
+### Power Electronics
+
+* Switchimg-mode power supply
+  * hissing or high-pitched whistling
+    * loose connection
+    * [What could cause a desktop power supply to “hiss”?](https://superuser.com/questions/295075/what-could-cause-a-desktop-power-supply-to-hiss)
+      * damaged voltage regulator, caused by voltage spikes/dips/lighting or failed components e.g. leaking cap
+      * power not stable
+    * capacitor squeal <- gas leakage from E-cap
+
+  * coil whine = low frequency noise
+    * [Coil whine and signs of a degrading power supply](https://www.eevblog.com/forum/beginners/coil-whine-and-signs-of-a-degrading-power-supply/)
+    * [Charger noise “coil whine”](https://electronics.stackexchange.com/questions/313125/charger-noise-coil-whine)
+      * skip pulses at low load -> audiable noise
+    * [What Is Coil Whine, and Can I Get Rid of It on My PC?](https://www.howtogeek.com/297166/what-is-coil-whine-and-can-i-get-rid-of-it-on-my-pc/)
+      * nothing to be concerned about
+
+* V-A 4 quardants: +/- V/A
+  * normal power supply 1st quardant only
+  * push-pull: 1 & 3 (+V +A or -V -A)
+  * not normal one (op-amp?)
+  * output current is -ve
+    * so that power dissipation on this device = V * A, if -ve A -> power output
+
+#### Buck converter
+
+* ripple calculation
+  * $Duty cycle (D) = V_out / {V_in(max) * efficiency (η)} $
+  * $Inductor ripple current ΔI_L = {(V_IN(max) - V_OUT) * D over {f_s * L}}$
+  * [BasicCalculation of a BuckConverter's Power Stage](https://www.ti.com/lit/an/slva477b/slva477b.pdf)
+
+* [Comparing Synchronous and Non-Synchronous DC/DC Converters](https://training.ti.com/comparing-synchronous-and-non-synchronous-dcdc-converters)
+  * Non-Synchoronous: traditional method, use diode
+  * Synchronous: use FET
+    * smaller critical path area -> reduce EMI
+
+* multiple buck converters work in parallel to provlde more current
+  * Challenge:
+    * [5 things you need to know about paralleling DC-DC converters](https://www.electropages.com/blog/2015/09/5-things-know-about-paralleling-dc-dc-converters)
+    * [Multiple buck converters from same source?](https://electronics.stackexchange.com/questions/251145/multiple-buck-converters-from-same-source)
+    * different in output voltage -> the high one will be most of the current -> over current
+
+  * [TPS54620 Parallel Operation](https://www.ti.com/lit/an/slva389/slva389.pdf)
+    * use COMP pin: Peak Current-Mode Control + original Voltage-Mode Control
+
+  * [How to parallel two DC/DC converters with digital controllers](https://www.ti.com/lit/an/slyt748/slyt748.pdf?ts=1602207925763&ref_url=https%253A%252F%252Fwww.google.com%252F)
+
+* integrated inductor
+  * TI called "buck module"
+  * maxim called "Power Module with Integrated Inductor" (e.g. MAXM17544)
+
+### Control Theory
+
+* compensation capacitor
+  * for [frequency compensation](https://en.wikipedia.org/wiki/Frequency_compensation)
+  * e.g. LMZ20502 Voltage regulator's feedback (C_FF)
+    * ![](2019-11-28-19-04-57.png)
+
+### Op-amp
+
+* calculate power dissipation:
+  * current source: (V+ - V_out) * I_out
+  * current sink: (V_out - V-) * I_out
+  * think of the BJT's structures and you'll know why
+
+* Input/Output rail-to-rail / over-the-rail
+  * Input/Output can close to / over supply voltage
+    * Note: @ higher current the op-amp may not be able to output voltage close to rail
+    * Note: "capable to do sth" doesn't gurantee working properly, may performance degrade @ close to rail, e.g. worse rejection ratio
+
+* Power sequencing
+  * better V+/- before input
+  * https://www.analog.com/en/analog-dialogue/articles/improper-power-sequencing-in-op-amps-analyzing-the-risks.html
+
+* Unused pin
+  * https://www.analog.com/en/analog-dialogue/raqs/raq-issue-46.html
+  * connect as follower (i.e. buffer), but not tied to power supply -> output offset from power supply otherwise -> saturation -> wasted power if the offset voltage has the wrong polarity, so "potential somewhere between the supply rails"
+  * Don't floating -> ESD -> latch-up (-> fail to work) or saturation (-> power wasted)
+
+* capacitive load
+  * [Ask The Applications Engineer-25: Op Amps Driving Capacitive Loads](https://www.analog.com/en/analog-dialogue/articles/ask-the-applications-engineer-25.html)
+  * [Do-it-yourself: Three ways to stabilize op amp capacitive loads](https://e2e.ti.com/blogs_/b/analogwire/archive/2017/08/01/do-it-yourself-three-ways-to-stabilize-op-amp-capacitive-loads)
+  * capacitive load -> RC circuit with R_O in op-amp -> oscillator
+    * solution:
+      * higher noise gain
+      * out-of-loop compensation
+      * in-loop compensation
+      * use op-amp w/ higher "capacitive load drive capability", e.g. op-amp w/ "unlimited" load capacitance
+
+* signal gain VS noise gain
+  * https://www.sciencedirect.com/topics/engineering/noise-gain
+
+* Fractional Gain: 0 < Gain < 1
+  * https://forum.allaboutcircuits.com/threads/question-about-a-fractional-gain-op-amp.123353/
+  * low source impedance: voltage divider -> follower
+  * high source impedance: unity gain inverter -> inverting amplifier
+
+* compensation
+  * gain compensation
+  * lead compensation
+  * no compensation -> may unstable
+  * usually built-in compensation, but some op-amp doesn't and let the user to have more degree of freedom
+  * compensation designed to work at certain signal gain
+    * e.g. 54-04228-1S OPA228, check datasheet section "USING THE OPA228 IN LOW GAINS"
+
+  * out-of-loop compensation: add an ext. res in series to op-amp output
+    * stable -> output impedance (which introduce a pole)
+      * AC: usually datasheet has graph
+        * e.g. LT6220 "Output Impedance vs Frequency", output Z capped to 100 Ohm
+      * DC: can guess w/ rail-to-rail, but not to accurate bcz working condition ain't usually there
+      * if ext. res in series << output Z, ext. res doesn't help much
+    * LT6220 has graph "Series Output Resistorvs Capacitive Load", so you don't need to guess from output Z
+
 ## Digital circuit
 
 * Passive Delay Line
   * [Passive Delay Line Design Considerations](http://www.rhombus-ind.com/dlcat/app1_pas.pdf)
-  * A Passive Delay Line is a special purpose Low Pass Filter designed to delay (phase shift) the input signal by a specifiedincrement of time, and is composed of series inductors andshunt capacitors with values dictated by the line impedance.
+  * A Passive Delay Line is a special purpose Low Pass Filter designed to delay (phase shift) the input signal by a specified increment of time, and is composed of series inductors and shunt capacitors with values dictated by the line impedance.
 
 * Schmitt trigger
   * comparator with hysteresis: originally LOW, need higher voltage to switch to HIGH, vice versa
@@ -80,6 +205,9 @@ with Zener: drop immediately -> fast
   * [Allaboutcircuits](https://www.allaboutcircuits.com/technical-articles/how-to-reduce-ground-bounce-mitigating-noise-pcb-design-best-practices/)
   * CMOS in IC: inductance in trace between output and VDD/GND -> when changing state, inductance causes -ve voltage -> Gate voltage not low enough, MOS keep open and close -> oscillate
     * solution: decoupling cap close to ICs power rail, current limit resistor, reduce inductance i.e. shorter return path
+
+* differential signal
+  * "_t" true signal; "_c" complementary signal
 
 ### Signal
 
@@ -94,7 +222,10 @@ with Zener: drop immediately -> fast
     * worst on slowest path
       * [What is the best way to improve negative slack? - Xilinx Forum](https://forums.xilinx.com/t5/Timing-Analysis/What-is-the-best-way-to-improve-negative-slack/td-p/995872)
       * Possible reasons: too much processing, clock crossings, I/O, high fanout
-      * To improve: use constants, LUT, parallel processing
+        * high fanout -> either:
+          * high capacitance -> long rise/fall time
+          * help you add buffer in synthesis -> added delay
+      * To improve: use constants, LUT, parallel processing, use other synthesis strategies to prevent high fanout
 
   * Hold Slack = Actual arrival time of next data - RAT
     * worst on fastest path (e.g. flip-flop to flip-flop), but usually solved by the router in FPGA implementation
@@ -102,13 +233,56 @@ with Zener: drop immediately -> fast
   * Setup slack is a function of frequency but hold slack is not
     * [Negative Hold Slack for AXI Interconnnect - Xilinx Forum](https://forums.xilinx.com/t5/Timing-Analysis/Negative-Hold-Slack-for-AXI-Interconnnect/m-p/1073222#M18781)
 
-  * -ve slack = SHIT!
+  * -ve (setup) slack = SHIT!
+  * -ve hold slack
+    * case study - GMAX2505 POC sensor board:
+      * root cause:
+        * clock period 2.083 ns (480 MHz)
+        * data path delay 2.000 ns
+        * clock path delay 5.297ns bcz clock domain crossing for 2 times (~1.7 ns each) -> much slower than data path
+      * possible problems:
+        * metability
+          * even though the typical timing may still be okay, 10% variation may lead to problem (Can you imagine 10% of 5ns delay, comparing to 10% of 1ns delay?)
+        * data clocked @ different clock cycle
+          * a problem if there's timing relationship between data paths
+      * possible solutions:
+        * use global-clock-capable pin for the clock signal
+        * add datapath delay
+
+* Repeater = Retimer or Redriver
+  * [PCI Express Retimers vs. Redrivers: An Eye-Popping Difference](https://www.asteralabs.com/post/pci-express-retimers-vs-redrivers-an-eye-popping-difference)
+  * Retimer: understand protocol, recover and retransmit data, may contain MCU
+  * Redriver: analouge device, amplify high frequency signal, CTLE -> Gain -> Driver
 
 #### Signal format
 
 * [Van Eck phreaking](https://en.wikipedia.org/wiki/Van_Eck_phreaking)
 * [Data strobe encoding](https://en.wikipedia.org/wiki/Data_strobe_encoding)
   * XOR always equal to clock signal
+
+* line encoding
+  * NRZ / NRZI (Non-Return-to-Zero Inverted)
+  * Manchester code -> embedded clock
+  * 8b/10b
+  * PAM4 (4 level pulse amplitude modulation)
+    * [PAM4 Signaling Fundamentals - Intel](https://www.intel.com/content/dam/www/programmable/us/en/pdfs/literature/an/an835.pdf)
+    * [Is PAM4 really necessary?](https://www.edn.com/is-pam4-really-necessary/)
+
+* RS-485
+  * https://store.chipkin.com/articles/rs485-what-are-the-allowed-cable-lengths-and-baud-rates-for-rs485-or-bacnet-mstp
+  * [HOW FAR AND HOW FAST CAN YOU GO WITHRS-485?](https://pdfserv.maximintegrated.com/en/an/AN3884.pdf)
+    * RS-422 vs RS-485
+
+* LVDS
+  * https://application-notes.digchip.com/009/9-12468.pdf
+    * LVDS vs RS-422 vs RS-485
+
+* sub-LVDS
+  * [Compact Camera Port 2 SubLVDS with 7 Series FPGAs High-Range I/O](https://www.xilinx.com/support/documentation/application_notes/xapp582-ccp2-sublvds-hr-io.pdf)
+    * There is no strict eye mask for SubLVDS
+
+* SLVS
+  * [Implementing an SLVS transceiver](https://www.edn.com/implementing-an-slvs-transceiver/)
 
 ##### I2C
 
@@ -154,12 +328,12 @@ with Zener: drop immediately -> fast
 
 ###### Electrical
 
-Pin Number | Cable Colour | Function
------------|--------------|---------
-1 | Red | V_BUS (5 volts)
-2 | White | D-
-3 | Green | D+
-4 | Black | Ground
+| Pin Number | Cable Colour | Function        |
+| ---------- | ------------ | --------------- |
+| 1          | Red          | V_BUS (5 volts) |
+| 2          | White        | D-              |
+| 3          | Green        | D+              |
+| 4          | Black        | Ground          |
 
 * D+ and D-
   * both differential and single ended
@@ -169,8 +343,11 @@ Pin Number | Cable Colour | Function
       * On low and full speed devices, a differential ‘1’ is transmitted by pulling D+ over 2.8V with a 15K ohm resistor pulled to ground and D- under 0.3V with a 1.5K ohm resistor pulled to 3.6V. A differential ‘0’ on the other hand is a D- greater than 2.8V and a D+ less than 0.3V with the same appropriate pull down/up resistors. 
     * single ended:
       * SE0 D+ & D- < 0.3V (low) for > 10ms
+
 * characteristic impedance: 90 ohms +/- 15%
+
 * High Speed (480Mbits/s) mode uses a 17.78mA constant current for signalling to reduce noise. 
+
 * Speed Identification: pulling D+/D-
   * based on speed
     * 1.5k ohm pull up D+: full speed
@@ -179,6 +356,7 @@ Pin Number | Cable Colour | Function
   * identify existance of USB device too
   * some ICs uses built-in resistor in silicon -> can turn on/off
     * off before ready for initialising the USB function
+
 * Power
   * Low-power bus powered functions
     * work under 4.40V - 5.25V
@@ -209,6 +387,28 @@ Pin Number | Cable Colour | Function
       * Low speed: 1.50Mb/s with ±1.5% or 15,000ppm
         * therefore resonator is acceptable for low speed only
 
+  * DCP (Dedicated charging port) signature
+    * D+ & D- shorted with <200Ω
+    * should provide up to 5A
+
+* USB3.0 link training
+  * http://xillybus.com/tutorials/usb3.0-training-by-example
+
+* USB3.0 RX & TX
+  * coupling cap
+    * [AC-coupling capacitors for high-speed differential interfaces](https://electronics.stackexchange.com/questions/173691/ac-coupling-capacitors-for-high-speed-differential-interfaces)
+    * [TUSB1002: AC Coupling Capacitors for USB 3.1 Gen 2](https://e2e.ti.com/support/interface/f/138/t/656208)
+
+* connectors
+  * some with a "sensor contact" pin -> detect connection
+  * cap near VBUS
+    * required by USB Specification
+    * host: min 120 uF
+    * device: 1 - 10 uF
+    * OTG: 1 - 6.5 uF
+
+* [USB Shield. To ground or not to ground? - StackExchange](https://electronics.stackexchange.com/questions/389972/usb-shield-to-ground-or-not-to-ground)
+
 ###### Class
 
 [USB-IF](https://www.usb.org/defined-class-codes)
@@ -232,13 +432,13 @@ Pin Number | Cable Colour | Function
 
 * _Referenece: [Wikipedia](https://en.wikipedia.org/wiki/PCI_Express#Pinout)_
 
-Lane        | Total Pin number
-------------|-----------------
-before notch| 11
-PCIe ×1     | 18
-PCIe ×4     | 32
-PCIe ×8     | 49
-PCIe ×16    | 82
+| Lane         | Total Pin number |
+| ------------ | ---------------- |
+| before notch | 11               |
+| PCIe ×1      | 18               |
+| PCIe ×4      | 32               |
+| PCIe ×8      | 49               |
+| PCIe ×16     | 82               |
 
 ##### AXI
 
@@ -261,11 +461,40 @@ PCIe ×16    | 82
 * ARM: TMS, TDI, TDO must have pull-ups
   * may enter boundary scan mode if not doing so
 
+##### Ethernet
+
+* 10GbE
+  * 10BGASE-T, use 4 × twisted pair copper wires
+    * [10G Ethernet IEEE 802.3an - Allan Nielsen - Tyco Electronics](http://www.ikn.no/download/Whitepaper-10G-Ethernet-10-08.pdf)
+    * PAM16 @ 800Mbaud
+      * 2 symbols form 256 combination, but only 128 are used (DSQ128) => 7 bit / 2 symbols
+        * ![](2020-05-14-14-02-04.png)
+        * Separation  between  adjacent  DSQ128  code  values  is  increased  by  √2  compared  with  a  conventional  16x16  orthogonal  array;  this  provides  3dB  improvement  in  signal-to-noise  ratio  and  leads  to  a  significant reduction in bit-error-rate (BER)
+      * 1024 symbols (i.e. 512 DSQ 128 labels) forms a DSQ128 code block with LDPC (1723, 2048), so there are 512 × 7 bits, but 325 check bits are used for each code block
+      * (7 bit × 512 - 325) ÷ 1024 = 3.18 bit / symbol
+      * 64b/65b coding + frame sync + CRC -> 3.15 bit / symbol
+      * 800 Mbaud × 3.15 × 4 lines = 10 Gbps
+    * [0GBASE--T: T: 10Gbit/s Ethernet over copper10Gbit/s Ethernet over copper - Broadcom](https://www.southampton.ac.uk/~sqc/EL336/10GBASE-T.pdf)
+
+##### Quad-SPI (QSPI)
+
+* [AN4760 - Quad-SPI interface on STM32 microcontrollers andmicroprocessors](https://www.st.com/content/ccc/resource/technical/document/application_note/group0/b0/7e/46/a8/5e/c1/48/01/DM00227538/files/DM00227538.pdf/jcr:content/translations/en.DM00227538.pdf)
+
+* 6 pins, half-duplex
+  * SS, CLK, 4 × I/O
+* need to handle address
+
 #### Signal integrity
 
 * slew rate
   * ΔV/s or ΔA/s
   * higher slew rate -> higher frequencies of intrest, higher EMI
+
+* phase noise in frequency domain = jitter in time domain
+  * phase noise mask -> important to reference clock
+    * Unit: dBc/Hz (power ratio of a signal to a carrier signal, per Hz, i.e. integrated)
+  * Ref: [Question about K7 GTX reference clock rise time](https://forums.xilinx.com/t5/Other-FPGA-Architecture/Question-about-K7-GTX-reference-clock-rise-time/td-p/732877)
+    * Why rise & fall time is unimportant to ref. clk.
 
 ##### high speed connection
 
@@ -297,6 +526,7 @@ PCIe ×16    | 82
 
   * Eye Width = (right crossing - 3σ) – (left crossing + 3σ)
   * Jitter: variances at the eye crossing point
+    * = phase noise in frequency-domain
 
 * instrument: network analyzer
   * source of error
@@ -335,13 +565,23 @@ apply when:
 * ratio between voltage and current waves that travel down the channel
 * uniform, lossless line: Z_0 = sqrt(L/C)
 * typical: 50-75 ohm
+  * [Why Fifty Ohms?](https://www.microwaves101.com/encyclopedias/why-fifty-ohms)
+    * 50 ohms
+      * insertion loss for air dielectric coax has a minimum around 77 ohms
+      * 30 ohms has best power handling
+      * compromise between 30 & 77 ohms
+    * 75 ohms for video
+      * does not need to carry high power
+      * minimum loss occurs @ 52 ohms for solid PTFE
+      * lower Z => larger diameter
+      * compromise between low loss and cable flexibility
 
 Ref: *[What is Characteristic Impedance? - Eric Bogatin](..\Hello_references\BTS002_Characteristic_Impedance_NOTED.pdf)*
 
 * Z_0 = 1/(C_L v), C_L = C of the line, v = speed of the signal
 
 * Impedance mismatch when connecting multiple DRAM -> T in the lines
-  * [Selecting different impedances then 50 ohm in DDR3 - StackExchange](https://electronics.stackexchange.com/questions/108345/selecting-different-impedances-then-50-ohm-in-ddr3)
+  * [Selecting different impedances then 50 ohm in DDR3 - StackExchange](https://electronics.stackexchange.com/questions/108345/selecting-different-impedances-then-50-ohm-in-ddr3)s
 
 ###### Reflections
 
@@ -353,6 +593,7 @@ Ref: *[What is Characteristic Impedance? - Eric Bogatin](..\Hello_references\BTS
 
 * Source termination: invalid levels momentarily
   * e.g. P2P connection
+  * [Driving Multiple Loads with Source Termination](https://flylib.com/books/en/1.389.1/driving_multiple_loads_with_source_termination.html)
 * Load termination: power dissipation exists
   * e.g. multi-drop bus
 * Both end
@@ -365,12 +606,17 @@ Ref: *[What is Characteristic Impedance? - Eric Bogatin](..\Hello_references\BTS
   * Next bit before reflections damp out
     * unterminated transmission line: mim. bit time = several round trips
   * dispersion <- nonzero line resistance
-  * crosstalk
+  * cross talk
     * capacitance to its neighbour
     * noise on non-switching wires
-      * if victim is floating: ![crosstalk on nonswitching wires](img\crosstalk.png)
-      * if victim is driven: ![crosstalk on driven wires](img\crosstalk_driven.png)
+      * if victim is floating: ![cross talk on nonswitching wires](img\crosstalk.png)
+      * if victim is driven: ![cross talk on driven wires](img\crosstalk_driven.png)
     * increased delay on switching wires
+    * https://electronics.stackexchange.com/questions/439213/ribbon-cable-cross-talk-is-there-a-fix-after-the-fact
+      * reduce cross talk:
+        * ground wire separating signals
+        * reduce slew rate <- increase value of source termination resistors
+        * etc.
   * ground bounce <- nonzero return path impedance
 
 #### High-speed I/O
@@ -387,6 +633,48 @@ Ref: *ELEC3342 Ch. 8*
   * break long wires into segments -> l/N
 * buffer or inverter
 
+#### Signal Processing
+
+* Dither
+  * [Dither - Wikipedia](https://en.wikipedia.org/wiki/Dither#Digital_photography_and_image_processing)
+  * For signal, apply random noise to reduce quantization distortion
+    * e.g. for real signal 0.8 1.6 2.4 3.2 4.0 4.8 5.6 6.4 results 0 1 2 3 4 4 5 6 after sampling, hence there are some regular and repeated error (e.g. error of 0.2, 0.4)  
+      In frequency domain, the error can be seen as peaks (harmonics), and they are audible to human ears  
+      Applying random noise reduces the amplitude of certain harmonics
+  * For image, use fewer pallete size (e.g. B/W, 256 colour) to represent more colour, e.g. changing grey colours into repeatative black and white dots
+
+#### Clock
+
+* crystals instead of oscillators:
+  * crystal cut, oscillation mode, calibration mode, PPM budgets, shunt capacitance, load capacitance, drive level, equivalent series resistance etc.
+  * e.g. USB3320 P.16 TABLE 4-11: USB3320 QUARTZ CRYSTAL SPECIFICATIONS 
+
+* [Could I use a single oscillator to clock multiple devices?](https://www.eevblog.com/forum/microcontrollers/could-i-use-a-single-oscillator-to-clock-multiple-devices/)
+  * concerns:
+    * load capacitance
+    * reflection -> minimize stubs
+    * sync or not?
+    * more limitations if crystals instead of oscillators
+
+  * solutions:
+    * just do it!
+    * clock buffers / use FPGA as clock buffers (especially when you have to sync 2 clocks)
+
+#### SerDes
+
+* Phase Detector
+  * https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-976-high-speed-communication-circuits-and-systems-spring-2003/lecture-notes/lec21.pdf
+  * detect phase error between clock and data
+  * e.g. Hogge Detector (output signal proporational to phase error), Alexander Bang-Bang Detector (output signal indicates sign of phase error)
+
+### I/O
+
+#### GPIO
+
+* ![Balser 14M camera example](2019-11-27-19-56-24.png)
+  * upper part: input - Diode-transistor logic
+  * transistor in lower part: output
+
 ## High-level digital circuit design (e.g. FPGA)
 
 ### FPGA
@@ -396,6 +684,16 @@ Ref: *ELEC3342 Ch. 8*
 * Simulation
   * input **cannot** change at the same time as rising edge of clock
     * if clock is in another process, the order of the execution between these processes is unknown -> unexpected result
+
+* Synthesis
+  * logic level reduction
+
+* Async. design is inevitable, need to handle clock domain crossing
+  * e.g. spread spectrum
+    * but usually absorb in setup / hold time
+
+* <https://www.nandland.com/articles/fpga-101-fpgas-for-beginners.html>
+  * [How To Get A Job In FPGA - The Resume](https://www.nandland.com/articles/resume-writing-for-fpga.html)
 
 ### Low-pass filter
 
@@ -415,19 +713,36 @@ Ref: *ELEC3342 Ch. 8*
   * Method 3: counter, +1 if HIGH, -1 if LOW, but there's upper limit and lower limit
   * BTW, Low-pass filter is just a subset of FIR/IIR filters!
 
-## EMC
+### DMA
 
+* DMA is an **ability**
+* **bus master** can be a **DMA Controller**, a **CPU** or a **FPGA**'s functional block
 
+### Testing
 
+* AOI
+  * check SMD
+  * A5M standard: usually do if MP
 
+* In-circuit testing (ICT)
+  * Method 1: jig, $5000 ~ $15000
+    * the more the cables, the more expensive the jig is
+    * can check continuity and voltage (by driving some testing pins)
+    * Boundary scan will do at the same time, used to check BGA IC
+  * Method 2: flying probes
+    * can check continuity only
+  * A5M standard
+    * complex enough & > 30/month & there's testing points on PCB
+      * exception: PCB w/ many conn, no need to ICT
+      * exception: 64-22939, board size not enough (unless to ICT when the panelized board is not separated)
+      * e.g. must do with BGA
 
-
-
-
-
-
-
-
+* Functional Test (FCT)
+  * all external ports should be tested -> use a test jig
+  * internal: on-board self test if possible
+    * FPGA: exercise every blocks if possible (fpga can damage individually)
+      * design a single test that pass all blocks, e.g. 8 MIPI IP
+    * Processor: if one code work, usually everything will work <- SW stuffs
 
 ## Package
 
@@ -438,7 +753,16 @@ Ref: *ELEC3342 Ch. 8*
   * REF (Reference)
     * = appropximately
 
-## Instrument
+* system in a package (SiP)
+  * >= 1 chips enclosed in one or more chip carrier packages that may be stacked using package on package
+    * Dies containing integrated circuits may be stacked vertically on a substrate
+
+## Measurement
+
+* Response Time
+  * [Response Time Measurement](https://www.tftcentral.co.uk/articles/response_time.htm)
+
+### Instrument
 
 * Thermocoupler
   * [感溫棒(熱電偶)的接線種類差異與選擇、Ktype、Ntype、Stype、Jtype-SJ儀錶](https://www.sj-gauge.com/_tw/faq/detail.php?cid=15&faqid=167)
@@ -449,11 +773,7 @@ Ref: *ELEC3342 Ch. 8*
   * Southwest Microwave
   * Amphenol
   * Hubersuhner
-
-## DMA
-
-* DMA is an **ability**
-* **bus master** can be a **DMA Controller**, a **CPU** or a **FPGA**'s functional block
+  * Rosenberger
 
 ## PCB
 
@@ -493,10 +813,20 @@ Ref: *ELEC3342 Ch. 8*
     * 3oz: 10 mil
   * DNP in schematics
     * Do Not Place
+    * a.k.a. NS / DNS (Do Not Stuff), DY (part not installed), DNI, SOT, DNF (Do Not Fit), POP (Populate OPtion), SOT
+      * https://www.eevblog.com/forum/beginners/ns-resistor-do-not-stuff-!!/
+
 * multi-layer board
   * [Stack Exchange](https://electronics.stackexchange.com/questions/356063/what-exactly-is-prepreg-and-core-in-a-pcb)
   * copper - prepreg - copper - core - copper - prepreg - copper
     * usually FR4
+
+  * 6-layer
+    * more place to route: Top - GND - Signal - Signal - PWR - Bottom
+    * better EMC: Top - GND - Signal - PWR - GND - Bottom
+      * inner signal is immediately adjacent to GND -> shorter return path + planner capacitance
+    * https://resources.pcb.cadence.com/blog/2019-pcb-design-for-the-6-layer-board-stackup
+
 * BGA
   * SMD VS NSMD
     * ![SMD VS NSMD](img/SMD_vs_NSMD.png)
@@ -504,6 +834,112 @@ Ref: *ELEC3342 Ch. 8*
     * depends on manufacturers' recommended footprints
     * NSMD pad style is recommended wherever possible due to its improved solderability and pad accuracy
 * differential pair length matching
+
+* Embedded Resistor / Capacitor
+  * additional inner layers
+  * can't have res / cap in different orders of magnitude
+  * e.g. https://www.venture-mfg.com/embedded-resistor/
+
+* Edge plating / metallizaing
+  * pros
+    * improve EMC by encapsulate sensitive traces
+  * https://www.linkedin.com/pulse/what-advantages-edge-plating-pcb-sean-yang
+
+  * plated half-holes (castellated holes)
+    * to connect to other boards
+    * https://www.pcbway.com/pcb_prototype/What_are_Plated_Half_Holes_Castellated_Holes_.html
+    * more-than-a-half holes: https://prototypepcb.com/castellated-holes/
+      * ![](https://prototypepcb.com/wp-content/uploads/2016/07/castellated-type2.png)
+
+* Reference Designator
+  * [The table below lists designators commonly used, and does not necessarily comply with standards.](https://en.wikipedia.org/wiki/Reference_designator#Designators)
+  >> A - Separable Assembly
+  >> AR - Amplifier
+  >> AT - Attenuator; Isolator
+  >> B - Blower, Motor
+  >> BT - Battery, Battery Cell - , Solar Cell
+  >> C - Cap: Fixed, Variable, Multi-element
+  >> CB - Circuit Breaker, Network protector
+  >> CP - Connector Adapter, Coupling
+  >> D or VR - Breakdown Diode, Zener Diode
+  >> D - Diode, Transzorb
+  >> DC - Directional Coupler
+  >> DL - Delay Line
+  >> DS - Display, Lamp, LED - , Visual Indicator
+  >> E - ANT, Terminal, Ferrite Bead Ring, Misc. Electrical Part
+  >> F - Fuse
+  >> FD* - Fiducial
+  >> FL - Filter
+  >> G - Generator, Oscillator
+  >> H - Hardware
+  >> HY - Circulator
+  >> J - Connector, Jack, Most fixed of pair
+  >> K - Contactor, Relay
+  >> L - Coil, Inductor
+  >> LS - Loudspeaker, Buzzer
+  >> M - Meter
+  >> MG - Motor-generator
+  >> MH* - Mounting Hole
+  >> MK - Microphone
+  >> MP - Mechanical Part
+  >> P - Conn., Plug, Most movable of pair
+  >> PS - Power Supply
+  >> Q - Transistor, SCR
+  >> R - Res: Fixed, Variable, Multi-element
+  >> RT - Thermistor, Thermal Resistor
+  >> RV - Symmetrical Varistor
+  >> S - Switch
+  >> T - Transformer
+  >> TB - Terminal Board, Terminal Strip
+  >> TC - Thermocouple
+  >> TP** - Test Point, In-circuit Test Points
+  >> U - Inseparable Assembly, IC Pkg.
+  >> VR - Voltage Regulator
+  >> W - Wire, Cable, Cable Assembly
+  >> X - Holder: Fuse, Lamp, Battery Socket
+  >> Y - Crystal, Crystal Oscillator
+  >> Z - Balun, General Network, Phase Shifter
+
+* Jumpers
+  * zero-ohm links
+  * jumper pads
+    * [Why would I use triangular solder jumper pads?](https://electronics.stackexchange.com/questions/439270/why-would-i-use-triangular-solder-jumper-pads)
+      * triangular -> longer length of the gap -> easier to create a solder blob
+
+### PCB fabrication
+
+* Design guidelines
+  * https://www.hemeixinpcb.com/pcb-technology/
+
+* FPC
+  * ![min bending radii for flexible circuits](2020-10-14-09-05-51.png)
+
+### PCB assembly
+
+* Wave soldering
+  * [SMD零件可以走波焊(wave soldering)製程？ - 電子製造，工作狂人](https://www.researchmfg.com/2013/05/smd-go-wave-solder/)
+    * 紅膠 below SMD device
+      * not feasible if smaller than 0402, as it may short-circuit / non-wet solder
+
+* Reflow
+  * [如何讓通孔元件/傳統插件走回焊爐製程(Paste-in-Hole, PIH) - 電子製造，工作狂人](https://www.researchmfg.com/2010/11/dip-paste-in-hole/)
+    * Paste-In-Hole, solder thou-hole components with reflow soldering
+
+  * solder paste thickness ~ 0.15mm (ref: Deng Bin)
+    * solder thickness after reflow should be smaller than that, unless cold solder (e.g. not hot enough, oxidized) -> surface tension create a sphere
+
+* solder
+  * mixing leaded and leadfree => not eutectic, i.e. not melt or solidifie at a single temperature
+    * only alloy with particular composition is eutectic, e.g. 63 Pb/37 Sn
+    * [mixing lead solder with lead free solder -  EEVblog Electronics Community Forum](https://www.eevblog.com/forum/beginners/mixing-lead-solder-with-lead-free-solder/)
+  * [How-To: Go Green With Lead Free Solder](https://hackaday.com/2008/05/22/how-to-go-green-with-lead-free-solder/)
+
+* 工藝邊 Breakaway tabs (?)
+  * will be removed after assembly
+
+* why can't we put something on non-standard decal
+  * decal not symmetry: pull component to one side
+  * solder pads too large: solder pull towards centre by surface tension during reflow -> cold solder
 
 ### Ground
 
@@ -516,6 +952,22 @@ Ref: *ELEC3342 Ch. 8*
       * e.g. ground layer shorten the loop
       * Solution:
         * singal on upper layer, bridge between ground plane in ground layer right underneath it
+
+* [What are the advantages of having two ground pours?](https://electronics.stackexchange.com/questions/41919/what-are-the-advantages-of-having-two-ground-pours)
+  * > if I understand correctly, especially from the last paragraph, I shouldn't use a pour on the top layer at all, correct?
+  * > Yes for most cases. Exceptions are special high speed signals, signals that must be impedance controlled, signals that must be delay-matched, etc.
+  * > The high frequency power loop current of a part should go out the power pin, thru the bypass cap, and back in to the ground pin without ever running accross the ground plane. This means you don't use a separate via for the ground side of the bypass cap. Connect it directly to the ground pin on the top side, then connect that net to the ground plane with a via at a single point. This technique will help a lot with RF emissions and cleanliness in general.
+
+* [Is a copper pour redundant on the top layer of a multilayer (>= 4) board with a ground plane?](https://electronics.stackexchange.com/questions/369576/is-a-copper-pour-redundant-on-the-top-layer-of-a-multilayer-4-board-with-a)
+  * Tag: crosstalk
+  * > Adding copper between signals to reduce crosstalk only works if the copper is effectively grounded at the frequency of interest. For audio, it can potentially help. But for high speed clocks, it will likely make the crosstalk worse since the fill copper has high impedance to GND (relatively speaking).
+  * > To reduce crosstalk, focus on leaving lots of space around the potential aggressor signals such as clocks. The worst thing you can do is route them along side each other or directly over/under without a ground plane between.
+
+* [multi-layer board copper pour](https://electronics.stackexchange.com/questions/26283/multi-layer-board-copper-pour)
+  * > Using a copper pour on layers which contain signals is **dangerous** because it's surprisingly easy to create **current loops**
+  * > For a multi-layer board, adding a **broken** copper plane **isn't a problem** because you can connect the broken plane to the intact internal plane without too much trouble.
+  * > If you want to add it for appearance, to have the extra ground connections for probing or rework, to improve your EMC characteristics, or to add additional heat sinking, you should **connect it to ground**. 
+  * > **do not pass any current** in the top or bottom pour plane. Make it a NO-NET. Then add a via to connect it to it's **internal GND plane** inside board layers. 
 
 #### CHGND = Chassis ground
 
@@ -576,6 +1028,36 @@ Ref: *ELEC3342 Ch. 8*
     * used when there's a heat sink
   * R_θJB: Junction-to-board thermal resistance
 
+### Debug
+
+* https://www.embedded.com/tips-on-building-debugging-embedded-designs-part-1/
+
+* GND points (for probe) scatter across the board
+  * or simply holes
+  * short GND for probes, smaller loop size, less noise
+
+* test point for signal
+  * boot loads for downloadable devices
+  * timing signals
+    * critical for you to determine timing sequence
+    * e.g. read, write, wait, clk, status output...
+    * timeout signal for watchdog (even better if LED)
+    * reset, battery signals
+    * serial conn. for debug if available
+    * 
+
+* spare I/O
+  * e.g. for timing measurement
+
+### Form factor
+
+* [Eurocard](https://en.wikipedia.org/wiki/Eurocard_(printed_circuit_board))
+  * <https://uk.rs-online.com/web/generalDisplay.html?id=ideas-and-advice/eurocards-pcb-guide>
+  * Single Eurocard (dimensions: 100mm x 160mm x 1.6mm), also known as the 3U Eurocard
+  * Double Eurocard (dimensions: 233.4mm x 160mm x 1.6mm), also known as the 6U Eurocard
+  * Half-size Eurocard (dimensions: 100mm x 80mm x 1.6mm)
+
+
 ## Memory
 
 ### Flash Memory
@@ -596,8 +1078,15 @@ Ref: *ELEC3342 Ch. 8*
 
 ### DDR
 
+* https://www.systemverilog.io/ddr4-basics
+
 * SDP (1 die per package) vs DDP (2 dice per package)
-* Pin
+
+* architecture
+  * row/col -> line -> bank -> bank group -> rank -> die
+    * rank: selected by CS
+
+* LPDDR4 Pin
   * CA (Command Address)
     * LPDDR4: latched on rising edge of the clock
       * 2-tick CA capture, i.e. each command requires 2 clock edges to latch (does this depends on RAM model?)
@@ -605,11 +1094,17 @@ Ref: *ELEC3342 Ch. 8*
   * DQ (Data)
   * DQS (Data Strobe)
     * clock for DQ, active only when read/write
+    * [GENERAL DDR SDRAM FUNCTIONALITY - micron](https://www.micron.com/-/media/client/global/documents/products/technical-note/dram/tn4605.pdf)
+    * rationale: the data valid window (or dataeye) moves relative to any fixed clock signal, due to changes in temperature, voltage, or loading. 
+    * controlled by the device driving data signals, i.e. controller fro WRITEs, dRAMs for READs
     * Read & Write has different sampling postition for DQ on DQS
+      * READ: edge-aligned with the data signals
+        * controller internally delay the received strobe to the centre of the received data eye
+      * WRITE: centre-aligned relative to data
   * CKE (Clock Enable)
-    * active high, act as clock stopped if LOW
+    * active high, clock stopped if LOW
   * CS (Chip Select)
-    * active low, act as NOP received if HIGH
+    * active low, NOP received if HIGH
   * Mode Registers
     * programmable by controllers
   * V_ref
@@ -618,38 +1113,156 @@ Ref: *ELEC3342 Ch. 8*
       * 2 range: range0 (10% - 30% of V_DD2), range1 (default, 22% - 42% of V_DD2)
         * V_DD2 = 1.06 - 1.17V
 
+* mechanism
+  * 2n-prefetch (DDR, 16n for DDR4)
+    * internal bus width = 2 × external -> remaining data to buffer
+    * burst size = 2 × ext. data width
+    * read fetches 2 data words; write requires 2 data words (and/or data mask bits)
+      * even if 1 out of 2 data words is ignored (Don't care), the data still occupies the DQ bus
+      * also commands cannot be applied more frequently (commands are SDR in DDR protocol)
+  * 
+
+  * performance
+    * [Memory Matters](http://www.kaldewey.com/pubs/Memory_Matters__RTSS08.pdf)
+      * difference in performance mainly mainly due to CPU architecture
+      * random access vs sequencial
+        * up to 13×
+      * read vs write
+        * read up to 2.5× faster
+        * WRITE: cache line -> need to read first before write back to DRAM (write takes the whole cache line, but not everything in the cache line are valid data)
+      * more thread -> faster proporationally
+        * each thd has own memory controller + cache
+    * https://www.xilinx.com/support/documentation/white_papers/wp383_Achieving_High_Performance_DDR3.pdf
+    * page-hit sequential: up to 90%
+    * page-hit random alternating R/W -> 27% / 57% (with reordering)
+
+    * page: no. of bits per row
+    * page-hit vs page-empty vs page-miss
+      * https://www.anandtech.com/show/3851/everything-you-always-wanted-to-know-about-sdram-memory-but-were-afraid-to-ask/5
+      * page-hit: the bank containing the open page is already active and is immediately ready to service requests
+        * latency = CAS-latency (CL)
+      * page-empty: bank to be accessed is Idle with no page open
+        * latency = CL + Row-Column (or Command) Delay (tRCD)
+      * page-miss: must first close an open page in order to open an alternate page in the same bank
+        * latency = CL + tRCD + RAS Precharge (tRP)
+
+      * e.g. DDR3-1600, 6-6-6-18 (CL-tRCD-tRP-tRAS)
+
+  * Xilinx: P.6
+    * https://www.xilinx.com/support/documentation/white_papers/wp383_Achieving_High_Performance_DDR3.pdf
+  * P.14
+    * https://www.xilinx.com/Attachment/Xilinx_Answer_63234_MIG_Performance_Estimation_Guide.pdf
+
+
+
+
 ## EMC (electro-magnetic compatibility)
 
-* Radiation
-  * high risk:
-    * oscillator
-    * I/O without insulator
-      * no need to add CM choke if isolated
-* Immunity
-  * Electrical Fast Transient (EFT)
-    * Once the Teli camera has spark during test
-      * Solution:
-        * Shell coating removed (1 side of Teli cam is silvery)
-        * Capicitors added
+## EMC
+
 * Coupling
   * R, C, L - conductive, capacitive, inductive
     * loop is inductive
     * wire, PCB trace are conductive and some capacitive
-* Electrostatic Discharge (ESD)
-
-  * Ref: *ELEC3342 Ch. 8*
-    * current limiting resistor
-    * diode clamps -> over/under-voltage surge
-    * thin gate oxides
-
-  * low standard in A5M, as nobody would touch the machine in operation
-    * performance degrade is acceptable, but should be able to restart
-
-  * 
 
 * filter from origin (e.g. add cap.) is better than from connector
   * e.g. between origin and EMI filter, other signal may be contiminated -> EMI too
   * e.g. VGA box clock signal
+
+* Drain wire in shielded cables
+  * [Purpose of Drain Wire in Shielded Cables](https://www.almorpowercables.com/blog/purpose-of-drain-wire-in-shielded-cables)
+
+* Power Integrity
+  * more lower input impedance
+
+* via fence: a row of via holes + metal wall
+  * isolate EM fields
+  * connected to GND through vias -> shorten path loop
+  * can form substrate integrated waveguide (SIW)
+
+* Guard ring == driven guard
+  * https://www.ourpcb.com/pcb-guard-ring.html
+    * used in low-current <- stop leakage current across guard ring
+    * application e.g. electrocardiography, which requires precise readings and has tiny room for error
+    * A guard ring is always connected to a low-impedance voltage source to nullify the otherwise current leakage produced by high impedance nodes on the circuit.
+    * Design considerations:
+      * 
+
+### Emission
+
+* high risk components:
+  * oscillator
+  * I/O without insulator
+    * no need to add CM choke if isolated
+
+  * SW-mode converter
+    * 3 ranges:
+      * < 50 MHz: Switching-frequency harmonics, conducted
+      * 50 - 200 MHz: MOSFET voltage and current rise/fall times, resonant ringing, both
+        * minimizing the power-loop inductance => increase the resonant frequency
+          * => decreases the stored reactive energy
+          * => lowers the resonant peak voltage
+          * => the damping factor is increased at a higher frequency due to the skin effect.
+      * > 200 MHz: Body-diode reverse recovery, radiated
+    * [Reducing radiated EMI for CISPR32 compliant nanoPower Buck converter with MAX38643](https://www.maximintegrated.com/en/design/technical-documents/app-notes/7/7199.html?utm_source=EEJournal&utm_medium=banner&utm_content=APPNOTE-7199&utm_campaign=FY21_Q2_2020_NOV_CPG-Power_WW_EssentialAnalog_EN&utm_source=EEJournal&utm_medium=Paid&utm_campaign=PaperBoost)
+      * closer C_bypass -> reduce parasitic inductance
+      * RC snubber, reduce overshoot but poorer power efficiency
+
+* diff. pair
+  * usually from common-mode driver output rather than conductor
+    * conductor cancels out @ far-field
+  * skew in diff. pair -> more radiated emission
+
+* connectors
+  * can diminish susceptibility to EMI -> better have tightly coupled pairs within the connector
+  * cheap options: RJ-45 shielded / surface mount / w/ CM choke / isolation transformers
+
+* [Suggestions for High-Speed Differential Connections](https://www.ti.com/lit/an/slla104a/slla104a.pdf)
+
+* near-field (induction) vs far-field (radiation)
+  * Wave impedance (E-field & H-field)
+    * ![Dependence of wave impedance on distance from source normalized to 2pi](img/Dependence-of-wave-impedance-on-distance-from-source-normalized-to-2-p.png)
+    * The certain characteric impedance @ certain distance
+    * E/H = wave impedance
+  * magnetic dipole
+  * far-field => near-field
+    * there should be the corrosponding impedance in near-field (track along the path in the graph above)
+  * near-field =/=> far-field
+    * may already attenuated due to characteric impedance unmatch
+
+
+### Immunity
+
+* Electrical Fast Transient (EFT)
+  * Once the Teli camera has spark during test
+    * Solution:
+      * Shell coating removed (1 side of Teli cam is silvery)
+      * Capicitors added
+
+* Electrostatic Discharge (ESD)
+
+  * low standard in A5M, as nobody would touch the machine in operation
+    * performance degrade is acceptable, but should be able to restart 
+
+  * Contact discharge: metal part, e.g. chassis, connectors
+    * sharp probe
+  * Air discharge: non-metal part
+    * sphere probe
+
+  * Design for ESD
+    * guide ESD to where you want them to go
+      * From chassis, connector chassis -> MGND in board -> guide them to chassis ground (e.g. via USB shield, power supply MGND)
+      * From cables -> GND in board -> guide them to MGND in board directly / via stitching cap -> same as above
+
+    * Ref: *ELEC3342 Ch. 8*
+      * current limiting resistor
+      * diode clamps -> over/under-voltage surge
+      * thin gate oxides
+
+    * stitching cap value
+      * IEC 61000-4-2: 330 Ω and 150 pF, contact discharge 2/4/6/8kV, you may use (1/2)CV^2 to calculate voltage rise
+      * one potential hazard is that whole GND on PCB rises (with respect to chassis ground) when there's ESD -> not functional
+      * 
 
 ### differential-mode VS common-mode noise
 
@@ -666,6 +1279,11 @@ Ref: *ELEC3342 Ch. 8*
 * L6 in [06-22332C schematic](C:\Users\aeemcng\Documents\Cone\2019-07-03_burnt_5M_cam\06-22332C_wrong_version\64-22332C_X_X1-CIRCUIT.sch)  
   ![CM choke](img\CM_choke.png)
   * between 3.3V and GND from connector and 3.3V and GND being actually used
+
+* Why still need CM choke when there's bypass cap?
+  * reduce radiated EM field via cable from power supply noise
+  * CM choke -> high common-mode impedance -> reduce amplitude of high-freq. current
+  * bypass cap -> low impedance -> provide short circuit for high-freq. current
 
 ## IC
 
@@ -685,30 +1303,85 @@ Ref: *ELEC3342 Ch. 8*
 * power regulator
   * has ramp up time
     * must be accounted in power sequence
+
   * Buck Converter
     * [PFM - Wikipedia](https://en.wikipedia.org/wiki/Pulse-frequency_modulation#Buck_Converters)
+
     * PWM vs PFM
       * PFM: suitable for low load
         * fixed 50% duty cycle for a period of time, then shut off
         * ![PFM of LMZ20502](PFM_of_LMZ20502.png)
       * Pros: PFM prevents inductor current drops to 0 -> no distinuous mode -> reduce conduction loss in inductors and capacitors
       * Cons: Higher ripple
+
     * Output capacitor
       * determines transient response behavior, ripple and accuracy and stability
       * [Optimal Transient Response for Processor Based Systems - Power Electronics](https://www.powerelectronics.com/technologies/regulators/article/21853270/optimal-transient-response-for-processor-based-systems)
 
+    * CCM vs DCM
+      * https://electronics.stackexchange.com/questions/410610/what-are-the-advantages-disavantages-on-using-ccm-or-dcm-in-boost-converter
+      * CCM: smaller ripple and inductor losses
+      * DCM: more stable (1st order ctrl system, while CCM is 2nd order)
+
+  * LDO
+    * PSRR (Power-supply ripple rejection)
+      * 40 dB = reduced by 10^(40/20) = 1/100 of V_in_ripple
+
+  * dummy load
+    * [Dummy load in dc dc converters - edaboard forum](https://www.edaboard.com/showthread.php?251777-Dummy-load-in-dc-dc-converters)
+    * both linear / switch-mode
+    * for control loop stability, e.g. ensure in linear control range
+
+  * Voltage reference
+    * a.k.a. [Bandgap voltage reference](https://en.wikipedia.org/wiki/Bandgap_voltage_reference)
+      * ![Brokaw bandgap reference](https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Bandgap-reference.svg/220px-Bandgap-reference.svg.png)
+    * VS Zener diode
+      * https://e2e.ti.com/blogs_/b/powerhouse/archive/2018/12/03/how-to-use-a-voltage-reference-as-a-voltage-regulator
+      * less current to maintain voltage
+
 * Protection
   * Fuse
+    * there exists fusible resistors, but they still follow safety standards
+      * https://www.circuitspedia.com/what-is-fusible-resistor/
+
+    * [Fuse Technology - Bussmann](J:\system\User\aeecbwang\About 03-21005-01 Fuse\DS500_520_520M\Fuse Technology.pdf)
+
+    * Types
+
+      * normal == fast-blow fuse
+        * the one you normally use, blow in 0.x seconds -> protect other devices on your PCB
+        * use rating much higher than you normal operation to reduce heat generation, and current should be much higher in faulty condition
+
+      * slow-blow fuse == time-delay fuse == time-lag fuse
+        * [What is a Slow-blow Fuse?](http://www.learningaboutelectronics.com/Articles/Slow-blow-fuse.php)
+        * can handle a temporary surge current which exceeds the current rating, so protect short-circuit but not affected by surge
+        * use ONLY when your application would have large current spike in NORMAL operation (e.g. motor driver), and your circuit is supposed can withstand current spike for seconds
+
+      * polyfuse == resetable
+        * holding current: guranteed closed; trip current: guranteed opened
+          * polyfuse are thermally activated, so affected greatly by enviro. temp. (e.g. in 80°C may trip in 50% current than 25°C)
+        * https://forum.allaboutcircuits.com/threads/what-is-holding-current-resettable-fuse-polyfuse.96050/
+
+    * [Breaking capacity / Interrupt ratings](https://en.wikipedia.org/wiki/Breaking_capacity)
+      * If exceed the rated breaking capacity of the apparatus, the breaking of the current would not be guaranteed
+
 
   * Zener / TVS
     * TVS absorbs surge voltage
+      * V surge (larger power) & ESD (smaller power) protection
 
     * Zener provides constant voltage
-    * Max. reverse standoff voltage: the voltage below which no significant conduction occurs
+    * Max. reverse stand-off voltage: the voltage below which no significant conduction occurs
     * Breakdown voltage: the voltage at which some specified and significant conduction occurs
+    * max. clamping voltage
+      * voltage across TVS would stays between breakdown & clamping voltage
 
   * Reverse voltage protection
-    * ![ElectroBoom](2019-11-07-10-40-06.png)
+    * small current: fuse + TVS combo
+    * large current
+      * ![ElectroBoom](2019-11-07-10-40-06.png)
+      * [Powering stuff when there is a power outage](https://www.electroboom.com/?tag=reverse-polarity)
+      * problem with "fuse + TVS combo" is that it needs high current to blow -> voltage across diode @ high current is high -> internal not protected
 
   * Load switch
     * e.g. FPF2702
@@ -733,6 +1406,18 @@ Ref: *ELEC3342 Ch. 8*
   * [De-coupling capacitor and Bulk capacitor - StackExchange](https://electronics.stackexchange.com/questions/170957/de-coupling-capacitor-and-bulk-capacitor)
   * A bulk capacitor is used to prevent the output of a supply from dropping too far during the periods when current is not available (e.g. buck converter)
 
+* Safety
+  * class X & Y
+  * [ABC's of SAFETY (Interference Suppression) Capacitors for Tube Radios - Just Radios](https://www.justradios.com/)safetytips.html
+
+* ![Series-equivalent circuit model](https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Electrolytic_capacitor_model.svg/220px-Electrolytic_capacitor_model.svg.png)
+* C, the capacitance of the capacitor
+* R_leak, the resistance representing the leakage current of the capacitor
+* R_ESR, the equivalent series resistance which summarizes all ohmic losses of the capacitor, usually abbreviated as "ESR"
+* L_ESL, the equivalent series inductance which is the effective self-inductance of the capacitor, usually abbreviated as "ESL".
+
+### Types
+
 * Ceramic
   * MLCCs: Multilayer Ceramic Capacitors
   * Rating
@@ -742,10 +1427,36 @@ Ref: *ELEC3342 Ch. 8*
       5: 85°C; 7: 125°C
       R: capacitance change over temperature = ±15%
       * Class 2 caps exhibit piezoelectric behaviour that can cause them to function as both microphones and buzzers
-    * Class 1, e.g. C0G
+    * Class 1, e.g. C0G (= NP0)
+      * C: Tempearature coefficient α = 0.0 × 10^−6/K
+        * capacitance variation dC/C of ±0.54% within the temperature range −55 to +125 °C
+      * 0: Multiplier of the temperature coefficient number code: -1
+      * G: Tolerance: ±30 ppm/K
       * suitable for audio due to the lack of piezoelectric behaviour
   * Life expenctancy
     * search for "hour", "endurance", "Load Life" in datasheet
+
+* Aluminium electrolytic
+  * [A COMPARISON OF SURFACE MOUNT ALUMINUM AND TANTALUM ELECTROLYTIC CAPACITORS](https://www.illinoiscapacitor.com/pdf/Papers/comparison_surface_mount_aluminum.pdf)
+  * solid aluminium capacitor -> similar size to tantulum cap.
+
+* Tantulum electrolytic
+  * Conventional tantalum electrolyte
+  * conductive polymer (Panasonic branded as POSCAP™)
+    * where GTX3080 cards failed: replace all MLCC with POSCAP
+    * https://industrial.panasonic.com/ww/products/capacitors/polymer-capacitors/poscap
+    * lower ESR & self-recovery
+
+  * ESR that is of the order of ohms
+
+  * https://electronics.stackexchange.com/questions/99320/are-tantalum-capacitors-safe-for-use-in-new-designs
+    * tantulam can be damaged permamently by voltage spikes (no self-healing, unlike Al wet electrolytic) -> localised damage and removal of the conduction path
+    * soldering PCBs at high temperatures may cause microfractures inside the pellet -> failure in low_impedance applications
+    * bad failure mode: thermal runaway, fires and small explosions
+    * prevent using failsafe devices e.g. current limiters or thermal fuses
+
+* Niobium electrolytic
+  * https://passive-components.eu/niobium-and-niobium-oxide-capacitors-overview/
 
 ## spark even if switch is off
 
@@ -763,28 +1474,30 @@ Ref: *ELEC3342 Ch. 8*
 
 ## WTF are you talking about?
 
-* https://www.ximea.com/en/corporate-news/camera-carbon-neutral-energy
+* <https://www.ximea.com/en/corporate-news/camera-carbon-neutral-energy>
 
 > It uses XIMEA’s circular DMA buffers to predict where the next frame will be delivered.
 > It then polls on the last pixel of that frame until it is non-zero, meaning that the frame was just delivered to the DMA buffer.
 > This approach resulted in communication jitter reduction from ~1ms to less than 200 ns on 10 cameras simultaneously. 
 > “I was shocked when I found out how well the cameras performed in our real-time application, and all of that with a simple change of synchronisation scheme.” — Artur Perek, MANTIS system developer.
 
-## I/O
+## Safety
 
-### GPIO
+* <https://snebulos.mit.edu/projects/reference/MIL-STD/MIL-STD-202G.pdf>
+  * MIL-STD-202G METHOD 108A: LIFE (AT ELEVATED AMBIENT TEMPERATURE)
+    | Test condition | Length of test, hours |
+    | -------------- | --------------------- |
+    | A              | 96                    |
+    | B              | 250                   |
+    | C              | 500                   |
+    | D              | 1,000                 |
+    | F              | 2,000                 |
+    | G              | 3,000                 |
+    | H              | 5,000                 |
+    | I              | 10,000                |
+    | J              | 30,000                |
+    | K              | 50,000                |
 
-* ![Balser 14M camera example](2019-11-27-19-56-24.png)
-  * upper part: input - Diode-transistor logic
-  * transistor in lower part: output
+## Appendix: Standards & Specifications
 
-## System
-
-* compensation capacitor
-  * for [frequency compensation](https://en.wikipedia.org/wiki/Frequency_compensation)
-  * e.g. LMZ20502 Voltage regulator's feedback (C_FF)
-    * ![](2019-11-28-19-04-57.png)
-
-## Response Time
-
-* [Response Time Measurement](https://www.tftcentral.co.uk/articles/response_time.htm)
+* [Standards and Specifications – PCB Technology Centre](https://www.polyu.edu.hk/ise/pcbtc/standards-and-specifications/index.htm)

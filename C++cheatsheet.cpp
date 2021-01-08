@@ -1168,7 +1168,9 @@ void replace (ForwardIterator first, ForwardIterator last, const T& old_value, c
 
 /*----------Templete----------*/
 /*-----class-----*/
-template <class T> //class or typename
+template <class T>
+// <class T> or <typename T>, typername is newer and avoid overloading
+// https://stackoverflow.com/questions/213121/use-class-or-typename-for-template-parameters
 class MyClass{
 	public:
 		T items[100];

@@ -256,6 +256,7 @@ void perror(const char *s);
 
 /* Compare 2 string */
 	strcmp (char s1[], char s2[]);	//Return negative if s1<s2, return 0 if s1==s2, return positive if s1>s2.
+	int memcmp ( const void * ptr1, const void * ptr2, size_t num ); // similar, but won't stop at null char
 
 	//e.g.
 	if (strcmp(a,b) == 0)

@@ -1,0 +1,6 @@
+{ signal: [
+    { name: "trigger",         wave: "010.....", node: ".a......"},
+    { name: "camera expo",     wave: "1..0..1.", node: "...c..d."},
+    { name: "lighting",        wave: "10...1..", node: ".b...e.."}
+  ],
+    edge: ['b-|c', 'c-|d', 'c-|e']}

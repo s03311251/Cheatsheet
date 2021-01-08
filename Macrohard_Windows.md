@@ -6,6 +6,9 @@
   * [StackExchange](https://superuser.com/questions/340932/how-to-list-all-computers-in-a-windows-wi-fi-network)
   * `arp -a`
 
+* show MAC address
+  * `ipconfig /all`
+
 ### ICS (Internet connection Sharing)
 
 [Windows 7 Internet connection Sharing (ICS) Host Computer Setup](https://www.home-network-help.com/windows-7-internet-connection-sharing.html)
@@ -69,11 +72,13 @@ fsutil file createnew my_file.tmp 4194304
 * press a key to continue ...
   * `pause`
 
-* read input
-  * `set /p my_variable="Your input:"`
+### Print & Read
 
 * print
   * `echo %my_variable%`
+
+* read input
+  * `set /p my_variable="Your input:"`
 
 * not to print every line of .bat on terminal
   * `@echo off`
@@ -116,6 +121,43 @@ fsutil file createnew my_file.tmp 4194304
   goto red_alert
   ```
 
+### Files
+
+* `xcopy C:\From.txt C:\To`
+
+## Alt code
+
+* × 0215
+* ÷ 246
+* ° 248/0176
+* Ø 0216
+* ± 241
+* ≥ 242
+* ≤ 243
+* ≈ 247
+* √ 251
+
+* α 224
+* ß 225
+* Γ 226
+* δ 235
+* Δ
+* ε 238
+* Θ 233
+* π 227
+* µ 230
+* Σ 228
+* σ 229
+* τ 231
+* Φ 232
+* φ 237
+* Ω 234
+
+## Windows Subsystem for Linux
+
+* root directory: `C:\Users\aeemcng\AppData\Local\Packages\CanonicalGroupLimited.Ubuntu20.04onWindows_79rhkp1fndgsc\LocalState\rootfs`
+* C:\ : `/mnt/c`
+
 ## Macrohard Office
 
 ### Word
@@ -147,3 +189,18 @@ fsutil file createnew my_file.tmp 4194304
 * split with delimiter
   * `=TRIM(MID(SUBSTITUTE(C2,"<delimiter>",REPT(" ",LEN(C2))),(<Nth field>-1)*LEN(C2)+1,LEN(C2)))`
     * e.g. `=TRIM(MID(SUBSTITUTE(C2,",",REPT(" ",LEN(C2))),(2-1)*LEN(C2)+1,LEN(C2)))`
+
+* Open multiple Excel windows
+  * Open a new Excel windows from toolbar and open the file with it
+  * [Opening Excel 2007/2010 in New Windows for Multi-Monitor Support](http://fielddata.blogspot.com/2011/07/opening-excel-20072010-in-new-windows.html)
+    * add excel to "Open With" by putting a shortcut of "excel.exe" into `%APPDATA%\Microsoft\Windows\SendTo`
+
+* Intersection of 2 sets
+  * `=IF(ISERROR(MATCH(A1,$B$1:$B$600,0)),"",A1)`
+    * assume the 2 sets are put in A: & B1:B600 respectively
+
+## Powerpoint
+
+* change from imperial to metric units
+  * https://support.microsoft.com/en-us/office/change-the-measurement-units-from-inches-to-centimeters-7fb08d33-750b-4e95-b332-e568d4550d82
+  * Windows control panel -> Region and Language -> Format -> Additional Setting -> Measurement Unit -> Metric

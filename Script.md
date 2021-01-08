@@ -30,6 +30,8 @@ Acquire {
 }
 ```
 
+* for pip: `pip --proxy http://10.1.1.101:8080 install somepackage --user`
+
 ## PDF
 
 * rotate
@@ -43,6 +45,19 @@ Acquire {
     ``` bash
     gs -q -sPAPERSIZE=letter -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=output.pdf 1.pdf 2.pdf
     ```
+
+* extract pages  
+  `  gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER -dFirstPage=1 -dLastPage=4 -sOutputFile=out.pdf in.pdf`
+
+* GhostScript on Windows
+  * `C:\Program Files\gs\gs9.52\bin>gswin64c.exe`
+
+* iamges to pdf
+  * `convert *.png output.pdf`
+
+  * Problem: `convert-im6.q16: attempt to perform an operation not allowed by the security policy `PDF' @ error/constitute.c/IsCoderAuthorized/408.`
+    * https://stackoverflow.com/questions/52998331/imagemagick-security-policy-pdf-blocking-conversion
+    * In `/etc/ImageMagick-7/policy.xml`, change the related line to `<policy domain="coder" rights="read | write" pattern="PDF" />`
 
 ## Git
 
@@ -132,3 +147,7 @@ pippo/pluto/*
 
 * Login  
   Session: `Xorg`
+
+## Memory test
+
+* http://benjr.tw/98338

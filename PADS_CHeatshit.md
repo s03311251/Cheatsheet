@@ -54,9 +54,11 @@ Modeless -> type `s (to be found)`
       * Size:
       * Sheet: -> Choose...
       * at least A3 for A5M
-      * To use A5M Sheet, in `Manage Lib. List...` remove `common` or lower its priority below `PADSLib\ASM`
+      * To use A5M Sheet, in `Manage Lib. List...` remove `common` ~~or lower its priority below~~ `PADSLib\ASM`
 3. Edit labels
     * Right click the border -> Fields...
+    * or use `ASM Template Setup`? (not tried before)
+      * U:\APPLCN\APPINI\ASMTSET\ASMTSET.BAT
 4. Add Part: ![Add Part](img\PADS_Add_Part.png)
     * Ctrl + R to rotate, Ctrl + F to flip
     * Assign values to your components when necessary
@@ -120,8 +122,12 @@ Modeless -> type `s (to be found)`
 
 * Colour
   * Tools -> Display Colors...
+
 * Tie-dots
   * Tools -> Options -> Design -> Tie Dot Diameter: 25 -> 50
+
+* Toggle Bottom view (mirror / flip view)
+  * `Alt + B` / ![](2020-10-12-12-20-44.png) in the toolbar
 
 ### Check
 
@@ -136,6 +142,10 @@ MGND vs GND
 
 net name 1, 2, 3 -> 01, 02, 03
 
+## Measure the distance btw 2 traces
+
+* View -> Clearance...
+
 ## Macros
 
 * Output Window at the bottom -> Macro
@@ -144,6 +154,87 @@ net name 1, 2, 3 -> 01, 02, 03
     * name = Replace(name, "From this", "To this")
 * Unit
   * Tools -> Options -> Global -> General -> Design Units
+
+``` vb
+NUM = 30
+DIRECTION = 1 ' Left: -1, Right: 1
+X = 8300
+dX = 300 * DIRECTION
+Y = 5486 
+EACH_STEP = -100
+
+Dim NET_NAME(NUM)
+
+' import pyperclip
+' 
+' info = ["SEN1_SHUTTER", "SEN2_SHUTTER", "SEN3_SHUTTER", "SEN4_SHUTTER", "SEN5_SHUTTER", "SEN6_SHUTTER", "SEN7_SHUTTER", "SEN8_SHUTTER", ' "SEN1_FLASH", "SEN2_FLASH", "SEN3_FLASH", "SEN4_FLASH"]
+' info_str = str()
+' for i in range(len(info)):
+'     info_str += 'NET_NAME(' + str(i)+ ') = "' + info[i] + '"\n'
+'     print("NET_NAME(" + str(i)+ ') = "' + info[i] + '"')
+'     #print(info_str)
+' 
+' pyperclip.copy(info_str)
+
+NET_NAME(0) = "SPARE_3.3V_1"
+NET_NAME(1) = "SPARE_3.3V_2"
+NET_NAME(2) = "SPARE_3.3V_3"
+NET_NAME(3) = "SPARE_3.3V_4"
+NET_NAME(4) = "SPARE_3.3V_5"
+NET_NAME(5) = "SPARE_3.3V_6"
+NET_NAME(6) = "SPARE_3.3V_7"
+NET_NAME(7) = "SPARE_1.8V_1"
+NET_NAME(8) = "SPARE_1.8V_2"
+NET_NAME(9) = "SPARE_1.8V_3"
+NET_NAME(10) = "SPARE_1.8V_4"
+NET_NAME(11) = "SPARE_1.8V_5"
+NET_NAME(12) = "SPARE_1.8V_6"
+NET_NAME(13) = "SPARE_1.8V_7"
+NET_NAME(14) = "SEN1_SCL"
+NET_NAME(15) = "SEN1_SDA"
+NET_NAME(16) = "SEN2_SCL"
+NET_NAME(17) = "SEN2_SDA"
+NET_NAME(18) = "SEN3_SCL"
+NET_NAME(19) = "SEN3_SDA"
+NET_NAME(20) = "SEN4_SCL"
+NET_NAME(21) = "SEN4_SDA"
+NET_NAME(22) = "SEN5_SCL"
+NET_NAME(23) = "SEN5_SDA"
+NET_NAME(24) = "SEN6_SCL"
+NET_NAME(25) = "SEN6_SDA"
+NET_NAME(26) = "SEN7_SCL"
+NET_NAME(27) = "SEN7_SDA"
+NET_NAME(28) = "SEN8_SCL"
+NET_NAME(29) = "SEN8_SDA"
+
+' Add Off-page
+Application.ExecuteCommand("Add Connection")
+
+For i = 0 To (NUM - 1)
+    dY = i * EACH_STEP
+    
+    Application.ExecuteCommand("Add Connection Corner", X, Y + dY)
+    Application.ExecuteCommand("Off-page")
+    If DIRECTION = 1 Then
+        Application.ExecuteCommand("X Mirror")
+    End If
+
+    Application.ExecuteCommand("Finish Move", X, Y + dY)
+Next
+
+Application.ExecuteCommand("Cancel")
+
+' Edit Net Name
+
+For i = 0 To (NUM - 1)
+    dY = i * EACH_STEP
+    
+    Application.ExecuteCommand("Select",  X + dX, Y + dY)
+    Application.ExecuteCommand("DoubleClick", X + dX, Y + dY)
+    DlgQueryNetNameProperties.NetName.Text = NET_NAME(i)
+    DlgQueryNetNameProperties.Ok.Click()
+Next
+```
 
 ## PADS Layout
 
@@ -169,12 +260,25 @@ net name 1, 2, 3 -> 01, 02, 03
   * from pin to pin
     * select net / select pin pairs -> double click
 
+  * View -> Clearance
+
+  * Set Origin
+    1. Right click -> select Board Outline, and select the board corner (or anything you like)
+    2. Setup -> Set Origin
+    3. Right click -> select components
+    4. right click the component -> Properties
+       * It is the distance between the board origin you set, and the origin of the component selected (usually equals the centre, but depends on how it is drawn on the library)
+
 * Pour copper
   * Tools -> Copper Plane Manager -> Start
 
+* ECO mode
+  * view -> Toolbars -> Eco Toolbar 
+
+
 ## HyperLynx
 
-* for simulation
+* is a simulation tool
 
 * BoardSim - Multiboard
   1. New Multiboard Project
@@ -184,11 +288,39 @@ net name 1, 2, 3 -> 01, 02, 03
       * advanced: SPICE / S-parameter, coupling is considered
   3. export sch. -> HyperLynx LineSim
 
-  * SI
-    * if you want to force an unmatched IBIS model, there may be some unrelated signals when you select the net
-      * Solution: in the IBIS model, remove those [Diff Pin]
+* select nets
+  * if you want to force an unmatched IBIS model, there may be some unrelated signals when you select the net
+    * Solution: in the IBIS model, remove those [Diff Pin]
 
-* LineSim
+* `Simulate SI`
+  * `Run Interactive Simulation...`
+
+  * `Run DDRx Batch Simulation...`
+    * References:
+      * [DDR3 Simulation Setup Guideline](..\Hello_references\Mentor_graphics\DDR3_sim_guide.pdf)
+      * [DDR3 ---- 時序嚮導和Write Leveling - Mentor Graphics](..\Hello_references\Mentor_graphics\Mentor%20Graphics_Lab2-DDRx.docx)
+      * [Explanation of the HyperLynx DDR Wizard Results Spreadsheets - Mentor Graphics](..\Hello_references\Mentor_graphics\HyperLynx%20DDR3\Explanation%20of%20the%20HyperLynx%20DDR%20Wizard%20Results%20Spreadsheets_10685_A.pdf)
+      * Congratulations if you can open the links above
+
+    * `Disable Nets`: depends on your circuit, CKE & CS
+    * `ODT Models`: when select OD (in `ODT Behavior`)
+    * `IBIS Model Selectors`: may affect V_ref
+      * For MT53B256M32D1DS used on Xilinx ZU4CG, use CA/CLK/CS_INPUT_ODT40_3733
+        * possible to enable ODT on CA/CLK/CS with MR11 & MR22
+    * `Vref Training`:
+      * e.g.:
+
+        ``` plaintext
+        PinName: U27.W28  Vref: 498
+        PinName: U27.Y28  Vref: 498
+        PinName: U27.AB28  Vref: 498
+        PinName: U27.AA28  Vref: 498
+        PinName: U27.Y27  Vref: 498
+        PinName: U27.AA27  Vref: 498
+        ```
+    * `Simulation Options`: `Select IC model corners`: Select all (`Fast-Strong`, `Typical`, `Slow-weak`), `At Die`
+
+* `Simulate SERDES`
   * PCI-e
     * Method 1: compliance wizard
       * available if the whole channel exists, e.g. from board to PC
@@ -208,28 +340,28 @@ net name 1, 2, 3 -> 01, 02, 03
       * Eye-diagram
       * without pre-emphesis and CTLE
 
-* MIPI
-  * compliance wizard not supported yet
-  * use HyperLynx DRC
+  * MIPI
+    * compliance wizard not supported yet
+    * use HyperLynx DRC
 
-* FPC
-  * if low speed, treat like a cable
-  * if high speed (e.g. 800Mbps) & FPC is 2 layers (with GND plane), cannot treat like a cable
-    * use multiboard
-    * for better accuracy, in `Coupling Setting`, tick `Include trace to area fill coupling`
+  * FPC
+    * if low speed, treat like a cable
+    * if high speed (e.g. 800Mbps) & FPC is 2 layers (with GND plane), cannot treat like a cable
+      * use multiboard
+      * for better accuracy, in `Coupling Setting`, tick `Include trace to area fill coupling`
 
-* Case: PCI-e board, add-in board <-> connector board <-> PC
-  * limitition: connector cannot be simulated in HyperLynx
-    * Method 1: make 2 bare PCBs with connectors only -> measure S-parameter
-      * variation mainly comes from PCB supplier
-    * Method 2: use PCI-e standard S-parameter model (Touchstone .s12p file)
-    * Method 3: standard equivalent trace (length & ohm) from PCI-e
-      * valid for slower connection (e.g. Gen3 8Gbps)
+  * Case: PCI-e board, add-in board <-> connector board <-> PC
+    * limitition: connector cannot be simulated in HyperLynx
+      * Method 1: make 2 bare PCBs with connectors only -> measure S-parameter
+        * variation mainly comes from PCB supplier
+      * Method 2: use PCI-e standard S-parameter model (Touchstone .s12p file)
+      * Method 3: standard equivalent trace (length & ohm) from PCI-e
+        * valid for slower connection (e.g. Gen3 8Gbps)
 
-  * Equalization
-    * PCI-e Gen 1: pre-emphesis
-    * PCI-e Gen 3: receiver equalization
-    * all in buffer model
+    * Equalization
+      * PCI-e Gen 1: pre-emphesis
+      * PCI-e Gen 3: receiver equalization
+      * all in buffer model
 
 ## Mentor Install
 

@@ -28,6 +28,36 @@
       * except image size
       * for toggling passthrough, need reset afterwards
 
+* AXI Timer
+  * 
+
+* AXI Quad SPI (QSPI)
+  * Single / Dual / Quad Mode
+    * in single mode, 2 IOs = MISO & MOSI
+
+  * Legacy Mode
+    * = not Performance Mode
+
+  * Performance Mode
+    * AXI-MM instead of AXI-Lite -> can burst
+
+  * XIP Mode (Execution-in-place)
+    * require Performance Mode
+    * IP core considers the SPI as read-only memory
+
+  * Enhanced Mode
+    * = Performance Mode + not XIP Mode
+
+  * STARTUPE2/3 promitive
+    * to access SPI memory
+
+  * Ports
+    * `spisel`
+      * must be '1' if in master mode
+
+  * Transfer
+    * Do not write to the transmit register when a SPI data transfer is in progress
+
 ### AXI
 
 * AXI4-Stream Infrastructure
@@ -48,12 +78,28 @@
 * Video DMA (VDMA)
   * DMA with frame buffering, 2-D Transfer etc.
 
-* Datamover
-  * Datamover won't send data out until the whole burst is in its buffer (?)
+* AXI DataMover
+  * if Store-and-Forward enabled, DataMover won't send data out until the whole burst is in its buffer
     * after buffering -> `addr_req_posted` = '1' and `s2mm_awvalid` = '1'
       * difference is that `addr_req_posted` only stay for 1 cycle but `s2mm_awvalid` stay until `s2mm_awready` = '1'
     * [source](doc/Datamover_buffer_test/)
     * ![simulation result](2020-01-29-13-50-13.png)
+  * It seems that there is a command FIFO if Store-and-Forward is disabled, so it can accept multiple commands before tready is de-asserted  
+    However, it seems that if Store-and-Forward is enabled, tready is de-asserted once a command is received and re-asserted only when the final data is put on the write channel of AXI-full (S2MM) bus (but not write response channel)
+  * even if Store-and-Forward disabled, In the absence of any S2MM command, AXI DataMover will take in four beats of streaming data.
+  * DataMover Basic, save 50% resource utilization
+    * shorter command, limited functionality (e.g. max burst size of 64)
+  * port
+    * advanced
+      * s2mm_addr_req_posted
+        * AW posted on S2MM bus
+      * s2mm_ld_nxt_len
+        * 1 for each AXI4 Write Transfer request to be posted
+      * s2mm_wr_len
+        * awlen posted
+        * valid on when s2mm_ld_nxt_len = '1'
+      * s2mm_wr_xfer_cmplt
+        * S2MM Write Data Channel transfer has completed, i.e. after wlast is asserted
 
 * AXI Interconnect
   * register slice (None, Outer, Auto, Outer and Auto)
@@ -64,13 +110,15 @@
 
 * 8-lane is not supported !
 
-* PL GTH transceivers are used
-  * 0.5 - 16.375 Gb/s
-  * serial-to-parallel
-  * GTY for even higher speed, but 0 in ZU4CG
-  * 16 in ZU4CG, 0 in ZU3CG
-  * low-poer mode (LPM)
-  * out-of-band (OOB) for low-speed
+* [XAPP1339 Implementing 2.5G MIPI D-PHY Controllers](https://www.xilinx.com/support/documentation/application_notes/xapp1339-mipi-dphy.pdf)
+  * fully or partially emulate the D-PHY functionality, PL GTH transceivers are used
+    * 0.5 - 16.375 Gb/s
+    * serial-to-parallel
+    * GTY for even higher speed, but 0 in ZU4CG
+    * 16 in ZU4CG, 0 in ZU3CG
+    * low-poer mode (LPM)
+    * out-of-band (OOB) for low-speed
+  *  UltraScale+ can natively support D-PHY, so no need
 
 * Shared logic btw subsystems
   * comprises a PLL and some BUFGs
@@ -92,6 +140,8 @@
       The effective minimun required video clock is:
       video_aclk(MHz) = Max {video_aclk1 , video_aclk2}
   * `dphy_clk_200M`: Clock for D-PHY core. Must be 200 MHz.
+    * If > 200 MHz:
+      * `[DRC PDRC-182] PLL_adv_ClkFrequency_div_no_dclk: The computed value 1600.171 MHz (CLKIN_PERIOD, net pl_clk1) for the VCO operating frequency of the PLL site PLL_X0Y2 (cell design_1_i/MIPI_CSI_2_RX/mipi_csi2_rx_subsyst_sen6/U0/phy/inst/inst/bd_11cc_phy_0_rx_support_i/slave_rx.bd_11cc_phy_0_rx_hssio_i/inst/top_inst/clk_rst_top_inst/clk_scheme_inst/GEN_PLL_IN_IP_USP.plle4_adv_pll0_inst) falls outside the operating range of the PLL VCO frequency for this device (750.000 - 1500.000 MHz). The computed value is (CLKFBOUT_MULT * 1000 / (CLKIN_PERIOD * DIVCLK_DIVIDE)). Please adjust either the input period CLKIN_PERIOD (4.687000), multiplication factor CLKFBOUT_MULT (15) or the division factor DIVCLK_DIVIDE (2), in order to achieve a VCO frequency within the rated operating range for this device.`
   * `clkoutphy_out`, `clkoutphy_in`: Shared Logic
   * `rxbyteclkhs`: 1/8 of line rate
   * PG232 Clocking (P.44)
@@ -102,6 +152,8 @@
   * Enable Deskew Detection: Select to enable Deskew sequence detection and centre alignment of clock and data lanes in MIPI D-PHY
     * for line rates > 1.5 Gb/s
   * Line Buffer Depth: 128 - 16384
+  * Enable Active Lanes
+    * if enabled, you can set no. of lanes dynamically via reg `Protocol Configuration Register [1:0]`
 
 * register
   * 3 regions
@@ -139,6 +191,12 @@
     * `core_clk` = `dphy_clk_200M` in subsystem IP
     * 200 MHz
     * `create_clock -name core_clk -period 5.000 [get_ports core_clk]`
+    * `clkoutphy_in`, `clkoutphy_out`: line rate
+      * Shared Logic
+    * `rxbyteclkhs`: line rate ÷ 8,  generated by dividing the received High-Speed DDR clock, not continuous and is only available for sampling when the RX clock lane is in high-speed mode
+  * Reset seq.
+    * `core_rst` -> `mmcm_lock` -> `pll_lock` -> 500 ms -> initalization happens indicated by `stopstate`
+    * `core_rst` minimum 40 `core_clk`
 
 * Video Format Bridge
   * pixel packing: UG934
@@ -158,7 +216,24 @@
   * `XDphy_Activate()`
     * Set enable bit and reset disable bit on control register (0x00)
 
+* line rate
+  * Ref: DS925 Table 72: MIPI D-PHY Performance
+    * -1 / SBVA484 / SFRA484: 1260 Mb/s
+    * -2 / -3: 2500 Mb/s / 1500 Mb/s (before Vivado 2019.1.1)
+
+### PCIe
+
+* PG213
+  * instantiates the integrated block found in UltraScale+ devices
+    * i.e. hard core
+
 ## Vivado
+
+* set no. of threads
+  * default on Windows: 2
+  * threads is different from job
+  * `set_param general.maxThreads 8`
+    * need to set everytime when start up Vivado
 
 ### Tcl
 
@@ -177,11 +252,97 @@
   * [Xilinx Forum](https://forums.xilinx.com/t5/Vivado-TCL-Community/vivado-export-utilization-information-issue/td-p/712087)
   * `report_utilization -name util_1 -spreadsheet_file util_1.xlsx`
 
+* Open `.tcl` direct from command prompt
+  * `vivado -mode batch -source my_run.tcl`
+
 ### Constraints
 
-* .xdc
-* auto-generated (e.g. IP specific):
-  * Sources -> Compile Order -> Constraints
+* .xdc file
+
+  * primary clock
+
+  * `input_delay`
+    * delay of external input signal relative to a particular pin
+    * jitter -> min / max of `input_delay`
+
+  * clock
+    * can help with `Timing Constraints Wizard`
+
+  * timing exception
+    * `set_clock_groups`
+      * set for all signals that cross the clock specified in the constraint
+
+      * 3 categories:
+        * synchronous: relative phase is predictable, e.g. from same clock source
+        * asynchronous: e.g. from different crystal / oscillator
+          * same effect as a set_false_path constraint between the clocks in the first group to the clocks in the second two groups
+          * use when it is safe to ignore timing in both directions
+        * unexpandable: some how synchronous, but their least common multiple (LCM) is too large to be handled by the timing engine. In Vivado, clocks are considered as unexpandable if their rising clock edges do not realign within 1000 cycles
+          * e.g. clock from same the clock source, but are 5.125 & 6.666 ns period respectively
+
+      * exclusive clocks
+        * ...
+
+    * `set_false_path`
+      * either specifiy a path, or all signals between the clock domains
+      * safe to ignore the paths in one direction
+      * e.g. reset, parameters that will change only once at init...
+      * <https://forums.xilinx.com/t5/Timing-Analysis/What-does-quot-set-false-path-through-quot-do/td-p/397531>
+
+    * `set_multicycle_path`
+      * when logical path that requires more than one clock cycle for the data to stabilize at the endpoint
+      * without setting multicycle path, timing analysis check the timing:
+        * 1 for setup analysis
+        * 0 for hold analysis
+      * e.g. for a path whose source changes every 2 clock cycle only, set multicycle path:
+        * 2 for setup analysis
+        * 0 for hold analysis
+      * check the UG903 "Figure 5-5: MultiCycle Path: Relaxing Setup Only" and "Figure 5-6: Multicycle Path: Relaxing Setup and Hold"
+
+    * `set_min_delay` & `set_max_delay`
+      *  override the default setup /hold requirement
+
+  * auto-generated (e.g. IP specific):
+    * Sources -> Compile Order -> Constraints
+
+  * recommanded sequence
+    * Ref: UG903 Vivado using constraints
+    * XDC constraints are applied sequentially: Chapter 7, XDC Precedence
+
+    ``` xdc
+    ## Timing Assertions Section
+    # Primary clocks
+    # Virtual clocks
+    # Generated clocks
+    # Clock Groups
+    # Bus Skew constraints
+    # Input and output delay constraints
+    ## Timing Exceptions Section
+    # False Paths
+    # Max Delay / Min Delay
+    # Multicycle Paths
+    # Case Analysis
+    # Disable Timing
+    ## Physical Constraints Section
+    # located anywhere in the file, preferably before or after the timing constraints
+    # or stored in a separate constraint file
+    ```
+
+* Timing Analysis
+  * Open Timing report
+    * Synthesis / Implementation -> Reports -> Timing -> Report timing summary
+      * Showing critical path:
+        1. Press the link of Worst Negative Slack (WNS)
+        2. Right click the path and select "Schematic"
+
+  * Interpret Timing report
+    * 
+
+* UG903 Vivado Design Suite User Guide: Constraints
+
+* UG949 UltraFast Design Methodology Guide for the Vivado Design Suite: Ch.5: Timing Closure
+
+* UG906 Vivado Design Suite User Guide Design Analysis and Closure Techniques Ch.5: Performing Timing Analysis
 
 ### Zynq
 
@@ -190,6 +351,9 @@
   * use Concat IP
 
 ### Debugging
+
+* wave debug
+  * open .wcfg: `open_wave_config C:/Cone/U3OA/HLS_ip_repo/U3OA_datamover_commander/solution1/sim/vhdl/datamover_commander.wcfg`
 
 * ILA
   * save waveform
@@ -202,6 +366,10 @@
     3. Open implemented design
     4. Apply trigger setting: `%apply_hw_ila_trigger ila_trig.tas`
        * If error (ILA core has been flattened during synthesis), regenerate your design and force synthesis to preserve hierarchy for the ILA core
+  * Setup @ Synthesized Design
+    * UG936 Lab 7
+    1. Open Synthesized Design -> Netlist -> right click the net -> `Mark Debug`
+    2. In the left-hand-side `Flow Navigator`, Press `Open Synthesized Design` -> `Set Up Debug`
 * VIO
   * Virtual input and output
 * JTAG-to-AXI
@@ -231,6 +399,18 @@
     * Input Buffer
   * D-flip-flop
     * `FDCE`, `FDPE`, `FDRE`, `FDSE`
+
+* attributes
+  * UG912 Properties Reference Guide
+  * `BLACK_BOX`
+  * `ASYNC_REG`
+    * imply `DONT_TOUCH`
+    * make sure the FFs are placed closely (into a single SLICE/CLB if possible) to maximize MTBF
+    * [Setting ASYNC_REG in VHDL for Two-Flop Synchronizer](https://forums.xilinx.com/t5/Timing-Analysis/Setting-ASYNC-REG-in-VHDL-for-Two-Flop-Synchronizer/td-p/700175)
+    * alternatively, instantiate with 2 library primitive flip flops
+  * `DONT_TOUCH`
+    * not optimize a user hierarchy, instantiated component, or signal
+  * `KEEP_HIERARCHY`
 
 ### IP Integrator
 
@@ -470,18 +650,35 @@
   * Ports: link from the block diagram to a (set of) pins in your IO xdc
   * Interfaces: = Ports, but with some constraint, or base on some standards (e.g. AXI, DDR, I2C)
 
+### RTL Analysis
+
+* IO Planning
+  * in the top-right layout drop-down menu, select "I/O Planning"
+
+* Floorplanning
+  * in the top-right layout drop-down menu, select "Floorplanning"
+
 ### Synthesis
 
 * Synthesized Design
-  * Open Synthesized Design ->Repport Timing Summary
+  * Open Synthesized Design -> Report Timing Summary
   * Window -> I/O Port
 
-### Timing
+### Partial Reconfiguration
 
-* Synthesis / Implementation -> Reports -> Timing -> Report timing summary
-  * Showing critical path:
-    1. Press the link of Worst Negative Slack (WNS)
-    2. Right click the path and select "Schematic"
+* Ref: UG909 Dynamic Function eXchange (DFX)
+* free after 2019.1
+
+### I/O Planning
+
+* UG899 Vivado Design Suite User Guide: I/O and Clock Planning
+  * Clock Planning
+    * A system clock, or board clock, is a primary clock that enters the design through an input port or a gigabit transceiver output pin. Each I/O bank contains clock-capable input pins to bring system clocks onto the device and into clock routing resources. In conjunction with dedicated clock buffers, the clock-capable input pins bring system clocks onto:
+      * Global clock lines
+      * I/O clocks lines within the same I/O bank and adjacent I/O banks
+      * Regional clock lines within the same clock region and vertically adjacent clock regions
+      * Clock management tiles (CMTs
+
 
 ## Xilinx SDK
 
@@ -489,11 +686,19 @@
   * [Xilinx forum](https://forums.xilinx.com/t5/Embedded-Development-Tools/Xilinx-SDK-adding-folder-with-source/td-p/808242)
   * Properties -> "C/C++ Build" -> "setting" -> "Tool setting" -> compiler -> directories -> Include Paths
 
+* XXX not found, cannot locate header file
+  * Properties -> "Project References", select the corrosponding bsp project
+  * `../standalone_bsp_master/psu_cortexa53_0/include` is not in default path, need to add in "C/C++ Build" -> (ry include folder manually
+  * 
 * `psu_init.tcl`
   * init Zynq PS setting
     * e.g. PL fabric clock divisor:
       * `# Register : PL0_REF_CTRL @ 0XFF5E00C0</p>`
       * `mask_write 0XFF5E00C0 0x013F3F07 0x01010A00`
+
+* Debugger
+  * pause at:
+    * `Debug configuration...` -> `Application` -> `Stop at main` / `Stop at program entry`
 
 ### Xil_In64()
 
@@ -983,6 +1188,12 @@ struct Usb_DevData {
     * System Registers described in the ARM Architecture Reference Manual
     * can be read on Registers -> sys -> 4
 
+#### watchdog (SWDT)
+
+* library: `wdttb`
+  * legacy & window watchdog timer
+  * window: always enabled
+
 ### DMA (ZDMA)
 
 * [MicroZed Chronicles](https://blog.hackster.io/microzed-chronicles-ps-dma-in-the-zynq-mpsoc-b45b6127d3f7)
@@ -1142,7 +1353,18 @@ struct Usb_DevData {
             1.0 * (tEnd - tStart) / (COUNTS_PER_SECOND/1000000));
     ```
 * select UART
+
   * Right click `_bsp` -> `Board Support Package Settings` -> `Standalone` -> modify `stdin`, `stdout` to `psu_uart_1`
+
+  * virtual UART through JTAG
+    * [Using JTAG UART - Xilinx SDK](https://www.xilinx.com/html_docs/xilinx2019_1/SDK_Doc/xsct/use_cases/xsdb_using_jtag_uart.html)
+    * Right click `_bsp` -> `Board Support Package Settings` -> `Standalone` -> modify `stdin`, `stdout` to `psu_coresight_0`
+    * in XSCT:
+      * `jtagterminal` (STDIO)  
+        `jtagterminal -stop` after you are done
+      * `readjtaguart` (STDOUT only)
+        `readjtaguart -stop` after you are done
+      * `readjtaguart -handle $fp` (STDOUT to a file)
 
 ### Xilinx Software Command Line Tool (XSCT)
 
@@ -1160,30 +1382,9 @@ struct Usb_DevData {
 
 ## Problems
 
-### Xilinx SDK Debugging: Stuck at CDPLE p14,#0xa,c13,c13,c13,#5
+### Vivado
 
-_[arm Community](https://community.arm.com/developer/tools-software/tools/f/armds-forum/4579/disassembly-view-ds-5)_
-
-* Debugger connection -> Try power cycle the board
-
-> the binary code for "CDPLE p14,#0xa,c13,c13,c13,#5" is 0xdeaddead". I think this means the serial (or parallel?) communications trouble with the debugger. That is, instruction codes on the memory could not be fetched successfully. Please check your debugger connection.
-
-### Vivado Edit Packaged IP: Mixed simulation files
-
-* [Xilinx Community](https://forums.xilinx.com/t5/Design-Entry/Vivado-IP-Flow-19-626-mixed-simulation-files/td-p/526899)
-* `[IP_Flow 19-626] File Group 'xilinx_vhdlbehavioralsimulation (VHDL Simulation)': verilogSource subcore file "simulation/fifo_generator_vlog_beh.v" is referenced from the pure language VHDL file group. Please consider changing the file group type to support mixed language sources.`
-* Answer:
-    1. Edit Packaged IP -> File Groups
-    2. Click folder `Simulation` -> `Properties` -> `Type`  
-        Changes from `vhdl:simulation` to `simulation`
-
-### Vivado IP Packager: crash when pressing "merge change"
-
-* [IP Packager crashes when merging changes](https://forums.xilinx.com/t5/Design-Entry/IP-Packager-crashes-when-merging-changes/td-p/728403)
-* Reason: IO port changed
-* Answer: Remove the port in "Ports and Interfaces"
-
-### Board not detected on Linux
+#### Board not detected on Linux
 
 * Vivado: Board not found in Hardware Manager
 * Xilinx SDK: `could not find fpga device on the board for connection 'local'`
@@ -1192,47 +1393,167 @@ _[arm Community](https://community.arm.com/developer/tools-software/tools/f/armd
   * `(path of vivado installed)/data/xicom/cable_drivers/lin64/install_script/install_drivers`
   * [Xilinx community](https://forums.xilinx.com/t5/Installation-and-Licensing/Vivado-Hardware-Server-Linux-Cable-drivers/td-p/660086)
 
-### Vivado Implementation
+#### Vivado Implementation
 
-* [](https://blog.csdn.net/xiao_yao_ke/article/details/100690544)
+* check progress: open `<project name>.runs\impl_1`, check last updated file + open `runme.log`
+
+* <https://blog.csdn.net/xiao_yao_ke/article/details/100690544>
 * `[Opt 31-67] Problem: A LUT2 cell in the design is missing a connection on input pin I0, which is used by the LUT equation. This pin has either been left unconnected in the design or the connection was removed due to the trimming of unused logic. The LUT cell name is: pl_ddr_axi_interconnect_u/inst/axi_interconnect_inst/crossbar_samd/gen_samd.crossbar_samd/gen_crossbar.gen_slave_slots[1].gen_si_write.splitter_aw_si/FSM_onehot_state[2]_i_2__0.`
 
 * Answer:
   * In Genereate Block Design, use `Global` instead of `Out of Context per IP`
 
-### Vivado Hardware Manager: There are no debug cores
+#### Vivado Hardware Manager: There are no debug cores
 
 * if the debug cores (e.g. ILA) have their clk connected to PS (pl_clk0), make sure that the PS program is running
 
-### Vivado IP: ASSOCIATED_BUSIF bus parameter is missing
+#### Vivado: Could not open 'C' for writing
+
+* [Xilinx Forum](https://forums.xilinx.com/t5/Welcome-Join/Common-17-354-Could-not-open-C-for-writing/td-p/693521)
+
+1. going to the “IP Sources” tab in the “Project Manager” (next to Source), and
+2. right-clicking the offending IP and selecting “Reset Output Products”.
+
+#### Vivado: xczu4_0 PL Power Status OFF, cannot connect PL TAP
+
+* turn if off and turn it on
+  * remember that JTAG also provide power
+
+#### Synthesis error: Could not find module 'PlatformCore_auto_us_df_93'. The XDC file (sth) will not be read for any cell of this module
+
+* Not sure why but no problem after "Generate Block Design" with "Global" selected
+
+* [Xiinx Forum](https://forums.xilinx.com/t5/Vivado-TCL-Community/Designutils-20-1280-error-at-synthesis-Could-not-find-module/td-p/413635)
+
+#### Synthesis / Implementation runs forever
+
+* Open Task Manager, kill zombie `vivado.exe`
+
+#### Digilent programmer cann't be not found
+
+* fix: install driver: `C:\Xilinx\SDK\2019.1\data\xicom\cable_drivers\nt64\digilent\install_digilent.exe`
+
+#### End of startup status: LOW (Vivado) / DONE pin did not go HIGH (SDK)
+
+* many possible reasons, e.g.:
+  * SRST_B pulled low (e.g. incorrectly connected logic to SRST_B)
+  * Not enough power to prog.
+    * https://forums.xilinx.com/t5/FPGA-Configuration/Error-Labtools-27-3165-End-of-startup-status-LOW/m-p/737029
+  * Wrong boot mode
+    * https://forums.xilinx.com/t5/Vivado-Debug-and-Power/DONE-pin-did-not-go-HIGH/td-p/155914
+
+#### couldn't load library "librdi_vivadotasks.dll"
+
+* network problem, something ruined your localhost
+
+#### Hardware Manager open ILA very slow
+
+* https://forums.xilinx.com/t5/Vivado-Debug-and-Power/Vivado-2019-x-Hardware-Manager-GUI-very-slow/td-p/1046780
+* fix:
+  * problem since 2019.1, use older version (e.g. 2018.3 Lab version) instead
+  * Or open ILA from tcl console instead of GUI
+
+#### Net names are not preserved by mark_debug
+
+* https://www.xilinx.com/support/answers/57727.html
+  * fixed in 2014.2? you serious? I suffer this in 2019.1!
+* fix: 
+  * MARK_DEBUG as VHDL attribute / in the elaborated design (the one before synthesis that I always forget); or
+  * Run the design with flatten_hierarchy set to "none"; or
+  * Apply DONT_TOUCH on the instance (which can be done through XDC set_property DONT_TOUCH true [get_cells ...]) 
+
+#### MMCM's CLKIN1_PERIOD keeps old value, even though I've changed the value in RTL files (.v/.vhd)
+
+* Error message: `[DRC PDRC-179] MMCM_adv_ClkFrequency_div_no_dclk: The computed value 1910.220 MHz (CLKIN1_PERIOD, net O) for the VCO operating frequency of the MMCM site MMCM_X0Y3 (cell design_1_i/top_txrx_example_0/U0/rx_channel1/rxc_gen/rx_mmcm_adv_inst) falls outside the operating range of the MMCM VCO frequency for this device (800.000 - 1600.000 MHz). The computed value is (CLKFBOUT_MULT_F * 1000 / (CLKINx_PERIOD * DIVCLK_DIVIDE)). Please run update_timing to update the MMCM settings. If that does not work, adjust either the input period CLKINx_PERIOD (1.047000), multiplication factor CLKFBOUT_MULT_F (2.000000) or the division factor DIVCLK_DIVIDE (1), in order to achieve a VCO frequency within the rated operating range for this device.`
+* fix:
+  * https://forums.xilinx.com/t5/Implementation/MMCM-CLKIN1-PERIOD-being-populated-with-mystery-value/td-p/1026301
+  * Please note that Vivado STA takes timing constraints from “XDC” (constraint file), not that attribute. Timing constraints are propagated to downstream, so your primary timing constraint (period constraint on input of clocking wizard) must be base for any downstream timing analysis.
+
+#### Combinatorial Loop Error : bitstream generation failed
+
+* <https://forums.xilinx.com/t5/Implementation/DRC-LUTLP-1-Combinatorial-Loop-Error-bitstream-generation-failed/td-p/833650>
+  * have you forgotten to add `rising_edge(clk)` in a process?
+
+#### IDELAYE3: Driver is not a routable pin
+
+* Error message:
+  * >>> [Route 35-19] Driver is not a routable pin (driver inst term design_1_i/slvds_intf_top_0/U0/iser2des_1_to_12_intr/IDELAYE3_inst/DATAOUT, cell type IDELAYE3, site type BITSLICE_RX_TX). Design will not pass DRC check. Router will skip net design_1_i/slvds_intf_top_0/U0/iser2des_1_to_12_intr/data_in_from_pins_delay
+    >>> [Timing 38-282] The design failed to meet the timing requirements. Please see the timing summary report for details on the timing violations.
+    >>> [DRC RTSTAT-1] Unrouted nets: 1 net(s) are unrouted. The problem bus(es) and/or net(s) are design_1_i/slvds_intf_top_0/U0/iser2des_1_to_12_intr/data_in_from_pins_delay.
+
+* cause:
+  * both input & output of IDELAYE3 can have 1 load only, cannot be monitored by ILA
+
+* fix:
+  * remove ILA
+
+#### rule_bufgce_bufg_conflict
+
+* Error message:
+* https://forums.xilinx.com/t5/General-Technical-Discussion/Using-a-Global-clock-buffer-at-a-Clock-Capable-pin/td-p/733653
+
+* cause:
+  * all I/O has IBUF (input buffer), but GC-capable I/O's IBUF (i.e. IBUFG in 7-series) has decitated route to the dedicated clock circuitry in the FPGA (including BUFIO, BUFR, BUFG, BUFH, MMCM/DCM/PLL)
+  * I used non-GC-capable I/O, so no decitated route
+
+* fix:
+  * `set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets design_1_i/slvds_intf_top_0/U0/clk_rx_gen_intr/IBUFGDS_clk_ddr_b/O]`
+    * Vivado will use fabric, instead of decitated route, to the dedicated clock circuitry
+    * becomes a local routed clock, terrible if you want to use the clock somewhere far away (huge delay through fabric)
+
+### Vivado IP
+
+#### Vivado Edit Packaged IP: Mixed simulation files
+
+* [Xilinx Community](https://forums.xilinx.com/t5/Design-Entry/Vivado-IP-Flow-19-626-mixed-simulation-files/td-p/526899)
+* `[IP_Flow 19-626] File Group 'xilinx_vhdlbehavioralsimulation (VHDL Simulation)': verilogSource subcore file "simulation/fifo_generator_vlog_beh.v" is referenced from the pure language VHDL file group. Please consider changing the file group type to support mixed language sources.`
+* Answer:
+    1. Edit Packaged IP -> File Groups
+    2. Click folder `Simulation` -> `Properties` -> `Type`  
+        Changes from `vhdl:simulation` to `simulation`
+
+#### Vivado Edit Packaged IP: Top module change, but IP is not changed accordingly
+
+* `Tools` -> `Create and Package New IP` once again
+
+#### Vivado IP Packager: crash when pressing "merge change"
+
+* [IP Packager crashes when merging changes](https://forums.xilinx.com/t5/Design-Entry/IP-Packager-crashes-when-merging-changes/td-p/728403)
+* Reason: IO port changed
+* Answer: Remove the port in "Ports and Interfaces"
+
+#### Vivado IP: ASSOCIATED_BUSIF bus parameter is missing
 
 * `Edit Packaged IP` -> `Ports and Interfaces` -> `Clock and Reset signals` -> Double click your signal -> `Parameter` -> Add `ASSOCIATED_BUSIF`
 
-### Vivado: Customized Parameters not updated in IP within custom IP
+#### Vivado: Customized Parameters not updated in IP within custom IP
 
 * Solution:
   1. IP Catalog -> Right click your custom IP -> Edit in IP Packager
   2. In Sources -> IP Sources, there's a weird duplicated IP you've never seen having old parameters
   3. Modify it
 
-### Xilinx SDK: .h in /inc not found
+### Xilinx SDK
+
+#### Xilinx SDK Debugging: Stuck at CDPLE p14,#0xa,c13,c13,c13,#5
+
+_[arm Community](https://community.arm.com/developer/tools-software/tools/f/armds-forum/4579/disassembly-view-ds-5)_
+
+* Debugger connection -> Try power cycle the board
+
+> the binary code for "CDPLE p14,#0xa,c13,c13,c13,#5" is 0xdeaddead". I think this means the serial (or parallel?) communications trouble with the debugger. That is, instruction codes on the memory could not be fetched successfully. Please check your debugger connection.
+
+#### Xilinx SDK: .h in /inc not found
 
 * [SDK can't find .h files](https://forums.xilinx.com/t5/Processor-System-Design/SDK-can-t-find-h-files/td-p/896942)
 * Properties -> C/C++ build settings -> C/C++ General -> Paths and Symbols
 
-### Xilinx SDK: Program Flash to QSPI - Flash programming initialization failed
+#### Xilinx SDK: Program Flash to QSPI - Flash programming initialization failed
 
 * can only program once every time booted
   * Answer: reboot the board
 
-### Vivado: Could not open 'C' for writing
-
-* [Xilinx Forum](https://forums.xilinx.com/t5/Welcome-Join/Common-17-354-Could-not-open-C-for-writing/td-p/693521)
-
-1. going to the “IP Sources” tab in the “Project Manager”, and
-2. right-clicking the offending IP and selecting “Reset Output Products”.
-
-### Xilinx SDK: Mask poll failed at ADDRESS: 0XFD4023E4 MASK: 0x00000010
+#### Xilinx SDK: Mask poll failed at ADDRESS: 0XFD4023E4 MASK: 0x00000010
 
 * [element14 Forum](https://www.element14.com/community/thread/70298/l/aes-zu3eges-1-sk-g-sktutorial20164-mask-poll-failed-at-address-0xfd4023e4-mask-0x00000010)
 
@@ -1240,18 +1561,37 @@ _[arm Community](https://community.arm.com/developer/tools-software/tools/f/armd
   * comment out `mask_poll 0XFD4023E4 0x00000010` in `design_1_wrapper_hw_platform_0/psu_init.tcl`
   * comment out `mask_poll(SERDES_L0_PLL_STATUS_READ_1_OFFSET, 0x00000010U);` in `design_1_wrapper_hw_platform_0/psu_init.c`
   * copy them and point to the copied files, as `Run As > Launch on Hardware (System Debugger)` may replace the files
-* root cause: this register you are talking about 0xFD4023E4 this is a PS Serdes status register, if you have enabled any of the GTRs on PS side, lets say for example, you have enabled usb 3, then the corresponding pll should get locked while ps is initializing. Now if there is no clock, the pll does not get locked and ps does not get initialized correctly, and probably that is why you see that error message.
+* root cause: USB PLL not locked
+  * this register you are talking about 0xFD4023E4 this is a PS Serdes status register, if you have enabled any of the GTRs on PS side, lets say for example, you have enabled usb 3, then the corresponding pll should get locked while ps is initializing. Now if there is no clock, the pll does not get locked and ps does not get initialized correctly, and probably that is why you see that error message.
 
-### Xilinx SDK: workspace won't load
+#### Xilinx SDK: workspace won't load
 
 * Root cause: workspace not properly close last time
-* Fix: Remove `.metadata/.plugins/org.eclipse.e4.workbench/workbench.xmi`
+* Fix: 
   * [Stackoverflow](https://stackoverflow.com/questions/19361376/how-to-fix-a-workspace-in-eclipse-that-does-not-open-anymore)
+  * run `C:\Xilinx\SDK\2019.1\eclipse\win64.o\eclipse.exe -clearPersistedState` and select the workspace and see it crash, then open with SDK again
 
-### Vivado: xczu4_0 PL Power Status OFF, cannot connect PL TAP
+#### Xilinx SDK: System Debugger not response
 
-* turn if off and turn it on
-  * remember that JTAG also provide power
+* reason: hw_platform project changed, the debugger cannot find their hardware platform
+* Fix: restart Xilinx SDK? or change Debug Configurations?
+
+#### Xilinx SDK: Debug (especially FSBL) shows disassembly instead of source code
+
+* [Zynq UltraScale+ MPSoC - Debugging FSBL application does not show source code](https://www.xilinx.com/support/answers/69269.html)
+* reason: The default settings of the FSBL application includes the standard link optimization. 
+* fix: `C/C++ Build` -> `Settings` -> `Tool Settings` -> `ARM v8 gcc compiler` -> `Miscellaneous` -> `Other flags`-> remove the "-flto" flag from the Miscellaneous compiler options.
+
+#### Xilinx SDK: Memory read error at 0x0. Cannot read 'sctlr_el3'. Cannot read 'r0'. Instruction transfer timeout
+
+* reason (probably): stopped @ FSBL / psu_init
+* fix: power cycle
+
+#### Xilinx SDK: Memory read error at 0xF800615C. Invalid DAP IDCODE. Invalid DAP ACK value: 0
+
+* https://forums.xilinx.com/t5/Embedded-Development-Tools/Memory-read-error-at-0xF800615C-Invalid-DAP-IDCODE-Invalid-DAP/td-p/984716
+* reason: power supply not enough current
+* fix: $$$
 
 ## Vivado HLS
 
@@ -1278,6 +1618,16 @@ _[arm Community](https://community.arm.com/developer/tools-software/tools/f/armd
 * power-on initialization
   * Solution Settings -> General -> Commands -> Add.. -> config_rtl -> reset: all
   * static and global variables
+
+* .gitignore
+
+``` gitignore
+solution1/csim
+solution1/impl
+solution1/syn
+solution1/sim
+solution1/.autopilot
+```
 
 ### Syntax
 
@@ -1332,12 +1682,22 @@ _[arm Community](https://community.arm.com/developer/tools-software/tools/f/armd
 
 * hls::stream
   * UG902 - Using HLS Streams
+  * implements as FIFO with a depth of 2 (directive STREAM to change size)
+    * infinite depth in C
+  * must be pass-by-reference
   * `#include <hls_stream.h>`
   * `hls::stream<ap_uint<72> > m_axis_command`
-  * `m_axis_command.write(cmd)` == `m_axis_command << cmd`
-  * `m_axis_command.read(cmd)` == `m_axis_command >> cmd`
-    * caution: error if the steam is empty
-  * `m_axis_command.empty()`
+  * blocking R/W
+    * `m_axis_command.write(cmd)` == `m_axis_command << cmd`
+    * `m_axis_command.read(cmd)` == `m_axis_command >> cmd`
+      * caution: error if the stream is empty
+  * non-blocking R/W
+    * `m_axis_command.write_nb(cmd)`
+    * `m_axis_command.read_nb(cmd)`
+    * `m_axis_command.full()`
+    * `m_axis_command.empty()`
+  * co-sim does not support structures or classes containing hls::stream<> members in the top-level interface and globally declared objects
+  * In co-sim, hls::stream cannot contains leftover data (i.e. << twice without calling the HLS C function), which may result in RTL simulation hanging
 
 * `ap_shift_reg.h`
   * Xilinx SRL IP for shift registers
@@ -1427,6 +1787,46 @@ void example(char *a, char *b, char *c)
     ``` vhdl
       reg_led_color0_V <= axi_led_color0_V;
     ```
+
+
+### xfOpenCV
+
+* download library from [GitHub](https://github.com/Xilinx/xfopencv)
+* add `CFLAGS` to the files, e.g. `-IC:/Cone/Vivado_sandbox/xfopencv-master/include -D__SDSVHLS__ -std=c++0x`
+
+
+Sobel
+200 × 200, 8-bit
+
+Simulation w/ C code
+
+* HLS Sandbox results
+
+* sobel
+  |  | LUTs | FFs | BRAM_18k | Clk cycle | Interval |
+  | RTL | 223 (0.25%) | 100 (0.057%) |  | 1 / pixel | 2.482 ns |
+  | HLS 1 pixel | 499 (0.57%) | 431 (0.25%) | 3 | 41805 | 2.366 ns |
+  | HLS 8 pixels | 1381 (1.6%) | 859 (0.49%) | 6 | 6830 | 2.735 ns |
+  | Overall XCZU4CG | 87840 | 175680 | 256 |  |  |
+
+  * BRAM keeps the same if image size -> 1920 × 1080
+  * BRAM increase w/ kernel size, e.g. 7 × 7 -> 9 BRAM used
+    * There does not reflect the reality though, are BRAM used in calculation is counted
+    * In/out ports are BRAM interface
+    * In AXIvideo2xfMat(), the whole image is put in the BRAM
+
+* template matching: convolution + peak detection
+
+  200 × 200, 8-bit image & kernel, 11 × 11 kernel
+
+  |  | LUTs | FFs | BRAM_18k | DSP48 | Clk cycle | Interval |
+  | HLS 1 pixel | 3369 (3.8%) | 4583 (2.6%) | 121 (16%) | 60 (23.4%) | 49216 | 3.439 |
+  | Overall XCZU4CG | 87840 | 175680 | 728 | 256 |  |  |
+
+* AXIvideo2xfMat()
+  * Problem: in Vivado simulation there is no output
+    * reason: The format is AXI-Video! so it's necessary to put start-of-frame & end-of-line (tuser & tlast)!
+
 
 
 ## ATC Design
@@ -1649,3 +2049,7 @@ u16 fw_info(const st_cmd_pkt_t *pst_rx_pkt,st_cmd_pkt_t *pst_tx_pkt)
   2. Open JTAG
   3. Double click PROM (xcf04s)
   4. Select PROM and double click `Program` on the left, then double click `Verify`
+
+## MIPI IP license
+
+* Du Yu: license server: `2100@atcembedded01`

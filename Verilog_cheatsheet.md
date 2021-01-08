@@ -50,14 +50,45 @@
   * `c = $time; // current sim time`
 
 * if
+  * https://www.chipverify.com/verilog/verilog-if-else-if
+  ``` verilog
+	if ([expression])
+		Single statement
+
+	// Use "begin" and "end" blocks for more than 1 statements		
+	if ([expression]) begin          
+		Multiple statements
+	end
+	
+	// Use else to execute statements for which expression is false
+	if ([expression]) begin
+		Multiple statements
+	end else begin
+		Multiple statements
+	end
+	
+	// if-else-if style to check for more expressions if the previous one doesn't match
+	if ([expression 1]) 
+		Single statement
+	else if ([expression 2]) begin
+		Multiple Statements
+	end else
+		Single statement
+  ```
+
+* switch-case
+  * https://www.chipverify.com/verilog/verilog-case-statement
 
   ``` verilog
-  if (z)
-  begin
-    state = param2[1];
-  else
-    state = param2[2];
-  end
+  case ([expression]) 
+    case_item1 : 	single statement;
+    case_item2,
+    case_item3 : 	single statement;
+    case_item4 : 	begin
+                    multiple statements;
+                  end
+    default 	 : statement;
+  endcase
   ```
 
 * NAND: ~&, NOR: ~|, XOR: ^, XNOR: ~^ or ^~
