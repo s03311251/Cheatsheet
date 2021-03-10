@@ -19,6 +19,31 @@ decoupling cap/filter
 * board guarding
   * if multiple GND domains, each use guarding if high speed
 
+## Battery
+
+* NiCd & NiMH
+  * charging
+    * https://www.youtube.com/watch?v=_ROhH9EkhtU
+    * end-of-charge detection:
+      * negative delta V detection
+      * temperature increase 
+        * NiMH: exothermic charging reaction
+        * NiCd: endothermic rx, only rise temperature when finished charging <- pressure built up
+    * stages
+      * fast charge (1C)
+      * top-up (0.1C, ~ 10 min)
+      * trickle charge (1/300 C, several hours)
+
+  * internal impedance
+    * electrical impedance: contact resistance etc., almost constant, valid in short period of time only (that's why @ 1 kHz mentioned in the datasheet)
+    * ionic resistance: resistance due to chemical reaction
+
+## Emergency lights
+
+* https://www.elprocus.com/what-is-an-emergency-light-circuit-diagram-its-working/
+  * 
+
+
 ## PADS VX
 
 ### Flow
